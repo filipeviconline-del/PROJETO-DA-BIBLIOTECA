@@ -78,7 +78,7 @@ function resetPreviewCapa(capaUrl) {
         `;
     } else {
         capaPreview.innerHTML = `
-            <span class="capa-placeholder">📷</span>
+            <span class="capa-placeholder"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon-svg"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></span>
             <p>Clique ou arraste para adicionar a capa</p>
         `;
     }
@@ -99,7 +99,7 @@ async function buscarApi(url, opcoes) {
 
 function formatarSigla(titulo) {
     const palavras = titulo.trim().split(/\s+/).filter(Boolean);
-    return palavras.slice(0, 2).map((p) => p[0].toUpperCase()).join("") || "📕";
+    return palavras.slice(0, 2).map((p) => p[0].toUpperCase()).join("") || '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon-svg"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>';
 }
 
 // --- Modal ---
@@ -169,7 +169,7 @@ function renderizarLivros() {
         livrosEmpty.innerHTML = "";
         const icone = document.createElement("span");
         icone.className = "empty-icon";
-        icone.textContent = "📚";
+        icone.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon-svg"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>';
 
         const texto = document.createElement("p");
         texto.textContent = termoBusca
@@ -218,7 +218,7 @@ function renderizarLivros() {
 
             const iconSpan = document.createElement("span");
             iconSpan.className = "cover-icon";
-            iconSpan.textContent = "📖";
+            iconSpan.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon-svg"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>';
 
             placeholder.append(iconSpan, siglaSpan);
             coverDiv.appendChild(placeholder);
@@ -274,13 +274,13 @@ function renderizarLivros() {
         const btnEditar = document.createElement("button");
         btnEditar.type = "button";
         btnEditar.className = "btn btn-secondary btn-small";
-        btnEditar.textContent = "✏ Editar";
+        btnEditar.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon-svg"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>' + " Editar";
         btnEditar.addEventListener("click", () => abrirModal(livro));
 
         const btnExcluir = document.createElement("button");
         btnExcluir.type = "button";
         btnExcluir.className = "btn btn-danger btn-small";
-        btnExcluir.textContent = "🗑 Excluir";
+        btnExcluir.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon-svg"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>' + " Excluir";
         btnExcluir.addEventListener("click", () => excluirLivro(livro));
 
         actionsDiv.append(btnEditar, btnExcluir);
