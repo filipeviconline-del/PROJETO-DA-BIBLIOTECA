@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ativação | ToschiBook</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/ativacao.css">
+</head>
+<body>
+    <main class="activation-page">
+        <section class="activation-card">
+            <div class="logo">
+                <div class="logo-icon">
+                    <svg viewBox="0 0 64 64" aria-hidden="true">
+                        <path d="M10 12h29c8 0 15 7 15 15v27H25c-8 0-15-6-15-14V12Z"
+                              fill="none" stroke="currentColor" stroke-width="4" stroke-linejoin="round"/>
+                        <path d="M25 54V27c0-8 6-15 14-15"
+                              fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+                        <path d="M39 12c0 8 6 15 15 15"
+                              fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+                    </svg>
+                </div>
+                <span>Toschi<span>Book</span></span>
+            </div>
+
+            <div class="activation-header">
+                <h1>Ativação do produto</h1>
+                <p>Insira o seu número de série para liberar o ToschiBook neste computador.</p>
+            </div>
+
+            <form id="activationForm" novalidate>
+                <div class="input-group">
+                    <label for="serial">Número de série</label>
+                    <input
+                        type="text"
+                        id="serial"
+                        name="serial"
+                        class="serial-input"
+                        placeholder="XXXXX-XXXXX-XXXXX-XXXXX-XXXXX"
+                        maxlength="29"
+                        autocomplete="off"
+                        spellcheck="false"
+                        inputmode="latin"
+                    >
+                    <small class="error-message" id="serialError"></small>
+                </div>
+
+                <button type="submit" class="activate-button" id="activateButton">
+                    <span class="button-text">Ativar produto</span>
+                    <span class="loading-spinner"></span>
+                </button>
+
+                <p class="status-message" id="statusMessage"></p>
+            </form>
+
+            <div class="machine-box">
+                <span class="machine-label">ID desta máquina</span>
+                <code id="machineId">...</code>
+                <small>Informe este código ao suporte caso precise de um novo serial.</small>
+            </div>
+
+            <div class="activation-footer">
+                <p>ToschiBook &copy; <span id="currentYear"></span> — Todos os direitos reservados.</p>
+            </div>
+        </section>
+    </main>
+
+    <script src="../javascript/api.js"></script>
+    <script src="../javascript/ativacao.js"></script>
+</body>
+</html>

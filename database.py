@@ -1,8 +1,23 @@
 """Conexão com o banco de dados SQLite do sistema de biblioteca escolar."""
 import sqlite3
+import sys
 from pathlib import Path
 
-DB_PATH = Path(__file__).parent / "biblioteca.db"
+
+def _diretorio_dados() -> Path:
+    """Diretório gravável para o banco e uploads.
+
+    Quando empacotado (PyInstaller), usa a pasta do executável — que é
+    gravável — em vez do bundle temporário read-only. Em execução normal,
+    usa a pasta do projeto.
+    """
+    if getattr(sys, "frozen", False):
+        return Path(sys.executable).parent
+    return Path(__file__).parent
+
+
+DIR_DADOS = _diretorio_dados()
+DB_PATH = DIR_DADOS / "biblioteca.db"
 
 
 def get_connection():

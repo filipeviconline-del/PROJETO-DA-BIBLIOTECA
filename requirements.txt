@@ -1,0 +1,6 @@
+# Dependências do ToschiBook
+Flask>=3.0,<4.0
+Werkzeug>=3.0,<4.0
+
+# Empacotamento do executável (apenas para gerar o instalador)
+pyinstaller>=6.0

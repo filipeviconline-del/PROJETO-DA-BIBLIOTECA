@@ -131,3 +131,86 @@ A aplicação está sendo desenvolvida por uma equipe utilizando boas práticas 
 ---
 
  
+---
+
+## 🚀 Instalação e execução
+
+O ToschiBook é uma aplicação web local (servidor **Flask** + interface no navegador).
+
+### Opção A — Rodar a partir do código-fonte
+
+```bash
+# 1. Clone o repositório e entre na pasta
+cd PROJETO-DA-BIBLIOTECA
+
+# 2. Instale tudo e inicie (abre o navegador automaticamente)
+python instalar.py
+```
+
+O `instalar.py` verifica o Python, instala as dependências do `requirements.txt`,
+inicializa o banco e abre o sistema em `http://127.0.0.1:5000`.
+
+Para apenas instalar, sem iniciar: `python instalar.py --sem-iniciar`.
+Depois, inicie quando quiser com `python iniciar.py`.
+
+### Opção B — Gerar o executável / instalador
+
+```bash
+# Instala dependências e empacota com o PyInstaller
+python build.py
+# (ou, atalhos:  build.bat  no Windows  /  ./build.sh  no Linux/macOS)
+```
+
+O executável é gerado em `dist/ToschiBook` (ou `dist\ToschiBook.exe` no Windows).
+
+**Instalador Windows (opcional):** com o [Inno Setup](https://jrsoftware.org/isdl.php)
+instalado, compile o `instalador.iss` para gerar `Output\ToschiBook-Setup.exe`,
+um instalador com atalhos no Menu Iniciar e na Área de Trabalho.
+
+---
+
+## 🔑 Ativação por número de série
+
+O sistema exige um **serial válido** para ser usado. Enquanto não estiver
+ativado, qualquer página é redirecionada para a tela de ativação
+(`/html/ativacao.html`) e a API responde `403`.
+
+### Como funciona
+
+- O serial tem o formato `XXXXX-XXXXX-XXXXX-XXXXX-XXXXX`.
+- Ele é **assinado criptograficamente (HMAC-SHA256)** e carrega, de forma
+  embutida, o tipo da licença e a validade — por isso a validação é **offline**,
+  sem precisar de servidor de licenças.
+- Ao ativar, a licença é **vinculada ao computador** (fingerprint de hardware) e
+  guardada no banco. Um serial ativado numa máquina não vale em outra.
+- Licenças do tipo `trial`/`anual` têm **data de expiração**; a `perpetua` não expira.
+
+### Gerar seriais (uso administrativo)
+
+Quem vende/administra as licenças usa o `gerar_serial.py`:
+
+```bash
+# 1 serial perpétuo
+python gerar_serial.py
+
+# 5 seriais anuais
+python gerar_serial.py --tipo anual --quantidade 5
+
+# trial de 15 dias
+python gerar_serial.py --tipo trial --dias 15
+
+# validar um serial existente
+python gerar_serial.py --validar XXXXX-XXXXX-XXXXX-XXXXX-XXXXX
+```
+
+> ⚠️ **Segurança:** a assinatura depende da chave secreta. Em produção, defina
+> a variável de ambiente `TOSCHIBOOK_LICENSE_KEY` com um valor forte — **a mesma**
+> no gerador e no produto. Não distribua o `gerar_serial.py` com o produto final.
+
+### Endpoints de licença
+
+| Método | Rota | Descrição |
+|---|---|---|
+| `GET` | `/api/licenca/status` | Estado atual da licença |
+| `GET` | `/api/licenca/maquina` | ID desta máquina (para suporte) |
+| `POST` | `/api/licenca/ativar` | Ativa com `{ "serial": "..." }` |

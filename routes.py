@@ -3,12 +3,12 @@ import os
 import uuid
 from pathlib import Path
 from flask import Blueprint, jsonify, request, send_from_directory
-from database import get_connection
+from database import get_connection, DIR_DADOS
 from models import Emprestimo, Livro, Usuario
 
 api = Blueprint("api", __name__, url_prefix="/api")
 
-UPLOAD_DIR = Path(__file__).parent / "uploads"
+UPLOAD_DIR = DIR_DADOS / "uploads"
 UPLOAD_DIR.mkdir(exist_ok=True)
 
 EXTENSOES_PERMITIDAS = {".jpg", ".jpeg", ".png", ".gif", ".webp"}

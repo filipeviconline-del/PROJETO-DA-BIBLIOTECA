@@ -1,0 +1,24 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.venv_test/
+env/
+
+# PyInstaller / build
+build/
+dist/
+*.spec.bak
+Output/
+
+# Banco de dados local (gerado em runtime)
+# Mantemos o biblioteca.db versionado como base inicial; descomente se preferir ignorar.
+# biblioteca.db
+
+# Sistema operacional / editores
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
