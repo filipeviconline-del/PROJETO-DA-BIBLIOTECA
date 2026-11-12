@@ -13,9 +13,10 @@ dist/
 *.spec.bak
 Output/
 
-# Banco de dados local (gerado em runtime)
-# Mantemos o biblioteca.db versionado como base inicial; descomente se preferir ignorar.
-# biblioteca.db
+# Banco de dados local (gerado em runtime pelo init_db()).
+# Não versionado: o sistema recria as tabelas automaticamente, e assim o
+# 'git pull' nunca trava por alterações locais no banco.
+biblioteca.db
 
 # SEGREDOS do licenciamento — NUNCA versionar!
 # Chave mestra de assinatura dos seriais e o log de emissões (dados de venda).
