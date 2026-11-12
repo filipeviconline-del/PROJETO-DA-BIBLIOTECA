@@ -147,21 +147,29 @@ cd PROJETO-DA-BIBLIOTECA
 python instalar.py
 ```
 
-O `instalar.py` verifica o Python, instala as dependências do `requirements.txt`,
-inicializa o banco e abre o sistema em `http://127.0.0.1:5000`.
+O `instalar.py` faz tudo automaticamente:
 
-Para apenas instalar, sem iniciar: `python instalar.py --sem-iniciar`.
-Depois, inicie quando quiser com `python iniciar.py`.
+1. verifica a versão do Python;
+2. **cria um ambiente virtual (`.venv`)** e se reexecuta dentro dele — assim já
+   resolve sozinho o erro `externally-managed-environment` (PEP 668) do Linux,
+   sem você precisar digitar nada;
+3. instala as dependências do `requirements.txt` no `.venv`;
+4. inicializa o banco e abre o sistema em `http://127.0.0.1:5000`.
 
-> 🐧 **Linux (Debian/Ubuntu/Mint):** se aparecer o erro
-> `externally-managed-environment` (PEP 668), use um ambiente virtual:
-> ```bash
-> python3 -m venv .venv
-> source .venv/bin/activate      # Windows: .venv\Scripts\activate
-> python instalar.py
-> ```
-> Nos próximos usos, ative o ambiente (`source .venv/bin/activate`) antes de
-> rodar `python iniciar.py`. Se faltar o venv: `sudo apt install python3-venv python3-full`.
+Para apenas preparar o ambiente, sem iniciar: `python3 instalar.py --sem-iniciar`.
+Para instalar no Python atual, sem criar um venv: `python3 instalar.py --sem-venv`.
+
+**Para iniciar novamente depois**, use o Python do ambiente virtual:
+
+```bash
+# Linux/macOS
+.venv/bin/python iniciar.py
+# Windows
+.venv\Scripts\python iniciar.py
+```
+
+> 🐧 Se a criação do venv falhar no Debian/Ubuntu/Mint, instale-o uma vez:
+> `sudo apt install python3-venv python3-full` e rode de novo.
 
 ### Opção B — Gerar o executável / instalador
 
