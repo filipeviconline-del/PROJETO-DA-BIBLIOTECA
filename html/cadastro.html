@@ -181,6 +181,43 @@
                         <small class="error-message" id="registrationError"></small>
                     </div>
 
+                    <div class="input-group">
+                        <label for="securityQuestion">Pergunta de segurança</label>
+
+                        <div class="input-wrapper">
+                            <span class="input-icon">?</span>
+
+                            <select id="securityQuestion" name="securityQuestion" class="select-input">
+                                <option value="">Escolha uma pergunta (recuperação de senha)</option>
+                                <option>Qual o nome do seu primeiro animal de estimação?</option>
+                                <option>Qual o nome da cidade onde você nasceu?</option>
+                                <option>Qual o nome da sua mãe?</option>
+                                <option>Qual era o nome da sua primeira escola?</option>
+                                <option>Qual o seu filme favorito?</option>
+                            </select>
+                        </div>
+
+                        <small class="error-message" id="securityQuestionError"></small>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="securityAnswer">Resposta de segurança</label>
+
+                        <div class="input-wrapper">
+                            <span class="input-icon">✎</span>
+
+                            <input
+                                type="text"
+                                id="securityAnswer"
+                                name="securityAnswer"
+                                placeholder="Resposta (use para recuperar a senha)"
+                                autocomplete="off"
+                            >
+                        </div>
+
+                        <small class="error-message" id="securityAnswerError"></small>
+                    </div>
+
                     <div class="form-row">
                         <div class="input-group">
                             <label for="password">Senha</label>

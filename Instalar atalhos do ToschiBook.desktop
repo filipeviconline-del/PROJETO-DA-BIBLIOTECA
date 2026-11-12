@@ -1,0 +1,8 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Instalar atalhos do ToschiBook
+Comment=Cria os icones do ToschiBook na area de trabalho e no menu
+Exec=bash -c 'cd "$(dirname "$(readlink -f "%k")")"; if [ -x .venv/bin/python ]; then .venv/bin/python criar_atalhos.py; else python3 criar_atalhos.py; fi; echo; read -p "Pressione Enter para fechar..."'
+Terminal=true
+Categories=Utility;

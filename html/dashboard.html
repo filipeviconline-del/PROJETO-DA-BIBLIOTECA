@@ -49,6 +49,10 @@
                     <span class="nav-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon-svg"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg></span>
                     Empréstimos
                 </a>
+                <a href="admin.html" class="nav-item">
+                    <span class="nav-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon-svg"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></span>
+                    Ativações
+                </a>
             </nav>
 
             <div class="sidebar-footer">
@@ -84,6 +88,17 @@
             </header>
 
             <!-- Cards de estatísticas -->
+            <!-- Status da licença (resumido) -->
+            <a href="admin.html" class="license-chip" id="licenseChip" hidden
+               title="Ver detalhes das ativações">
+                <span class="license-chip-icon" id="chipIcon">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon-svg"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                </span>
+                <span class="license-chip-text" id="chipText">Verificando licença...</span>
+                <span class="license-chip-dias" id="chipDias" hidden></span>
+                <span class="license-chip-link">ver ativações ›</span>
+            </a>
+
             <section class="stats-grid" aria-label="Estatísticas da biblioteca">
                 <article class="stat-card">
                     <div class="stat-icon stat-icon-green"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon-svg"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></div>

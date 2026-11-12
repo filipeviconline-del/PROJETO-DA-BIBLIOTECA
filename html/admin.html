@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Ativações | ToschiBook</title>
+
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/dashboard.css">
+    <link rel="stylesheet" href="/css/paginas.css">
+    <link rel="stylesheet" href="/css/admin.css">
+</head>
+
+<body class="dashboard-body">
+
+    <div class="dashboard-layout">
+
+        <!-- Barra lateral -->
+        <aside class="sidebar">
+            <div class="sidebar-brand logo">
+                <div class="logo-icon">
+                    <svg viewBox="0 0 64 64" aria-hidden="true">
+                        <path d="M10 12h29c8 0 15 7 15 15v27H25c-8 0-15-6-15-14V12Z" fill="none" stroke="currentColor"
+                            stroke-width="4" stroke-linejoin="round" />
+                        <path d="M25 54V27c0-8 6-15 14-15" fill="none" stroke="currentColor" stroke-width="4"
+                            stroke-linecap="round" />
+                        <path d="M39 12c0 8 6 15 15 15" fill="none" stroke="currentColor" stroke-width="4"
+                            stroke-linecap="round" />
+                    </svg>
+                </div>
+                <span>Toschi<span>Book</span></span>
+            </div>
+
+            <nav class="sidebar-nav">
+                <a href="dashboard.html" class="nav-item">
+                    <span class="nav-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon-svg"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span>
+                    Início
+                </a>
+                <a href="livros.html" class="nav-item">
+                    <span class="nav-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon-svg"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></span>
+                    Livros
+                </a>
+                <a href="usuarios.html" class="nav-item">
+                    <span class="nav-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon-svg"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
+                    Usuários
+                </a>
+                <a href="emprestimos.html" class="nav-item">
+                    <span class="nav-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon-svg"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg></span>
+                    Empréstimos
+                </a>
+                <a href="admin.html" class="nav-item active" aria-current="page">
+                    <span class="nav-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon-svg"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></span>
+                    Ativações
+                </a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="admin-chip">
+                    <span class="admin-avatar">U</span>
+                    <div class="admin-info">
+                        <strong id="adminNome">Usuário</strong>
+                        <small>Biblioteca</small>
+                    </div>
+                </div>
+
+                <a href="index.html" class="logout-link" id="logoutLink">
+                    <span class="nav-icon">⎋</span>
+                    Sair
+                </a>
+            </div>
+        </aside>
+
+        <!-- Conteúdo principal -->
+        <div class="dashboard-main">
+
+            <header class="topbar">
+                <div class="topbar-title">
+                    <h1>Painel de ativações</h1>
+                    <p>Gerencie as licenças e máquinas ativadas</p>
+                </div>
+
+                <div class="topbar-actions">
+                    <button class="refresh-button" id="refreshButton" type="button">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon-svg"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg> Atualizar
+                    </button>
+                </div>
+            </header>
+
+            <!-- Banner de status da licença -->
+            <section class="license-banner" id="licenseBanner" aria-live="polite">
+                <div class="license-banner-main">
+                    <span class="license-banner-icon" id="bannerIcon">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon-svg"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                    </span>
+                    <div class="license-banner-text">
+                        <strong id="bannerTitulo">Verificando licença...</strong>
+                        <span id="bannerSubtitulo">Aguarde um instante</span>
+                    </div>
+                    <div class="license-banner-dias" id="bannerDiasBox" hidden>
+                        <strong id="bannerDias">—</strong>
+                        <span>dias restantes</span>
+                    </div>
+                </div>
+                <div class="license-progress" id="licenseProgressWrap" hidden>
+                    <div class="license-progress-bar" id="licenseProgressBar"></div>
+                </div>
+                <div class="license-progress-legend" id="licenseProgressLegend" hidden>
+                    <span id="legendInicio">—</span>
+                    <span id="legendFim">—</span>
+                </div>
+            </section>
+
+            <!-- Resumo da licença atual -->
+            <section class="stats-grid" aria-label="Resumo da licença">
+                <article class="stat-card">
+                    <div class="stat-icon stat-icon-green"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon-svg"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+                    <div class="stat-info">
+                        <span class="stat-label">Licença desta máquina</span>
+                        <strong class="stat-value" id="statTipo">—</strong>
+                    </div>
+                </article>
+
+                <article class="stat-card">
+                    <div class="stat-icon stat-icon-blue"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon-svg"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div>
+                    <div class="stat-info">
+                        <span class="stat-label">Ativações (desta licença)</span>
+                        <strong class="stat-value" id="statAtivacoes">—</strong>
+                    </div>
+                </article>
+
+                <article class="stat-card">
+                    <div class="stat-icon stat-icon-yellow"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon-svg"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
+                    <div class="stat-info">
+                        <span class="stat-label">Validade</span>
+                        <strong class="stat-value" id="statValidade">—</strong>
+                    </div>
+                </article>
+
+                <article class="stat-card">
+                    <div class="stat-icon stat-icon-green"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon-svg"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></div>
+                    <div class="stat-info">
+                        <span class="stat-label">ID desta máquina</span>
+                        <strong class="stat-value machine-id" id="statMaquina">—</strong>
+                    </div>
+                </article>
+            </section>
+
+            <!-- Resumo por serial -->
+            <section class="content-grid content-grid-single">
+                <div class="panel">
+                    <div class="panel-header">
+                        <h2>Seriais emitidos nesta instalação</h2>
+                        <span class="panel-badge" id="seriaisCount">0</span>
+                    </div>
+
+                    <div class="panel-body">
+                        <div class="empty-state" id="seriaisEmpty" hidden>
+                            <span class="empty-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon-svg"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></span>
+                            <p>Nenhum serial ativado ainda.</p>
+                        </div>
+
+                        <div class="table-wrapper">
+                            <table class="data-table" id="seriaisTable" hidden>
+                                <thead>
+                                    <tr>
+                                        <th>Serial</th>
+                                        <th>Tipo</th>
+                                        <th>Máquinas</th>
+                                        <th>Limite</th>
+                                        <th>Última ativação</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="seriaisBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Lista detalhada de ativações -->
+            <section class="content-grid content-grid-single">
+                <div class="panel">
+                    <div class="panel-header">
+                        <h2>Máquinas ativadas</h2>
+                        <span class="panel-badge" id="ativacoesCount">0</span>
+                    </div>
+
+                    <div class="panel-body">
+                        <div class="empty-state" id="ativacoesEmpty" hidden>
+                            <span class="empty-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon-svg"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></span>
+                            <p>Nenhuma máquina ativada ainda.</p>
+                        </div>
+
+                        <div class="table-wrapper">
+                            <table class="data-table" id="ativacoesTable" hidden>
+                                <thead>
+                                    <tr>
+                                        <th>Serial</th>
+                                        <th>ID da máquina</th>
+                                        <th>Ativado em</th>
+                                        <th>Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="ativacoesBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+        </div>
+
+    </div>
+
+    <script src="/javascript/api.js"></script>
+    <script src="/javascript/auth.js"></script>
+    <script src="/javascript/admin.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recuperar senha | ToschiBook</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/recuperar.css">
+</head>
+<body>
+    <main class="recover-page">
+        <section class="recover-card">
+            <div class="logo">
+                <div class="logo-icon">
+                    <svg viewBox="0 0 64 64" aria-hidden="true">
+                        <path d="M10 12h29c8 0 15 7 15 15v27H25c-8 0-15-6-15-14V12Z"
+                              fill="none" stroke="currentColor" stroke-width="4" stroke-linejoin="round"/>
+                        <path d="M25 54V27c0-8 6-15 14-15"
+                              fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+                        <path d="M39 12c0 8 6 15 15 15"
+                              fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+                    </svg>
+                </div>
+                <span>Toschi<span>Book</span></span>
+            </div>
+
+            <div class="recover-header">
+                <h1>Recuperar senha</h1>
+                <p>Responda sua pergunta de segurança para criar uma nova senha.</p>
+            </div>
+
+            <!-- Etapa 1: identificar a conta -->
+            <form id="stepIdentify">
+                <div class="input-group">
+                    <label for="identificador">E-mail ou usuário</label>
+                    <input type="text" id="identificador" name="identificador"
+                           placeholder="Digite seu e-mail ou usuário" autocomplete="username">
+                    <small class="error-message" id="identError"></small>
+                </div>
+                <button type="submit" class="recover-button" id="btnBuscar">
+                    <span class="button-text">Continuar</span>
+                    <span class="loading-spinner"></span>
+                </button>
+            </form>
+
+            <!-- Etapa 2: responder a pergunta e definir nova senha -->
+            <form id="stepReset" hidden>
+                <div class="input-group">
+                    <label>Sua pergunta de segurança</label>
+                    <p class="security-question" id="perguntaTexto">—</p>
+                </div>
+                <div class="input-group">
+                    <label for="resposta">Resposta</label>
+                    <input type="text" id="resposta" name="resposta"
+                           placeholder="Sua resposta" autocomplete="off">
+                    <small class="error-message" id="respostaError"></small>
+                </div>
+                <div class="input-group">
+                    <label for="novaSenha">Nova senha</label>
+                    <div class="pw-wrapper">
+                        <input type="password" id="novaSenha" name="novaSenha"
+                               placeholder="Mínimo 6 caracteres" autocomplete="new-password">
+                        <button type="button" class="show-password" id="togglePw">Mostrar</button>
+                    </div>
+                    <small class="error-message" id="senhaError"></small>
+                </div>
+                <button type="submit" class="recover-button" id="btnRedefinir">
+                    <span class="button-text">Redefinir senha</span>
+                    <span class="loading-spinner"></span>
+                </button>
+            </form>
+
+            <p class="status-message" id="statusMessage"></p>
+
+            <div class="recover-footer">
+                <a href="index.html">← Voltar ao login</a>
+            </div>
+        </section>
+    </main>
+
+    <script src="../javascript/api.js"></script>
+    <script src="../javascript/recuperar.js"></script>
+</body>
+</html>

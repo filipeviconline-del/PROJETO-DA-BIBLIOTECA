@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.venv_test/
+env/
+
+# PyInstaller / build
+build/
+dist/
+*.spec.bak
+Output/
+
+# Banco de dados local (gerado em runtime pelo init_db()).
+# Não versionado: o sistema recria as tabelas automaticamente, e assim o
+# 'git pull' nunca trava por alterações locais no banco.
+biblioteca.db
+
+# SEGREDOS do licenciamento — NUNCA versionar!
+# Chave mestra de assinatura dos seriais e o log de emissões (dados de venda).
+licenca.key
+*.key
+seriais_emitidos.jsonl
+seriais*.csv
+
+# Sistema operacional / editores
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
