@@ -9,7 +9,7 @@ Também registra um ``before_request`` que BLOQUEIA o uso do sistema enquanto
 o produto não estiver ativado, redirecionando o usuário para a tela de
 ativação.
 """
-from flask import Blueprint, jsonify, redirect, request, send_from_directory
+from flask import Blueprint, jsonify, redirect, request, session
 
 import licenca
 
@@ -52,6 +52,42 @@ def licenca_ativar():
     if not resultado.get("sucesso"):
         return jsonify(resultado), 400
     return jsonify(resultado)
+
+
+# ---------- Painel administrativo de ativações ----------
+
+def _exige_login():
+    """Retorna uma resposta 401 se não houver sessão de usuário logada."""
+    if not session.get("conta_id"):
+        return jsonify({"erro": "Faça login para acessar o painel administrativo."}), 401
+    return None
+
+
+@ativacao.get("/api/licenca/ativacoes")
+def licenca_ativacoes():
+    """Lista as ativações registradas e um resumo por serial (requer login)."""
+    bloqueio = _exige_login()
+    if bloqueio:
+        return bloqueio
+
+    return jsonify({
+        "licenca": licenca.status(),
+        "id_maquina": licenca.obter_id_maquina(),
+        "resumo_seriais": licenca.resumo_seriais(),
+        "ativacoes": licenca.listar_ativacoes(),
+    })
+
+
+@ativacao.delete("/api/licenca/ativacoes/<int:ativacao_id>")
+def licenca_revogar(ativacao_id):
+    """Revoga uma ativação específica, liberando a vaga (requer login)."""
+    bloqueio = _exige_login()
+    if bloqueio:
+        return bloqueio
+
+    if not licenca.revogar_ativacao(ativacao_id):
+        return jsonify({"erro": "Ativação não encontrada."}), 404
+    return jsonify({"mensagem": "Ativação revogada com sucesso."})
 
 
 def registrar_bloqueio(app):

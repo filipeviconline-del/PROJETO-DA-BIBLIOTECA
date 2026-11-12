@@ -245,6 +245,17 @@ python gerar_serial.py --validar XXXXX-XXXXX-XXXXX-XXXXX-XXXXX
 > a variável de ambiente `TOSCHIBOOK_LICENSE_KEY` com um valor forte — **a mesma**
 > no gerador e no produto. Não distribua o `gerar_serial.py` com o produto final.
 
+### Painel administrativo de ativações
+
+Depois de logar, acesse **Ativações** na barra lateral (`/html/admin.html`) para:
+
+- ver a **licença atual** desta máquina (tipo, validade, ativações usadas/limite e o ID da máquina);
+- consultar o **resumo por serial** (quantas máquinas cada serial ativou e quantas vagas restam);
+- listar todas as **máquinas ativadas**, identificando qual é a máquina atual;
+- **revogar** uma ativação para liberar uma vaga do serial (revogar a própria máquina exige reativação).
+
+> 🔒 Os endpoints do painel exigem uma **sessão de usuário logada** (retornam `401` caso contrário).
+
 ### Endpoints de licença
 
 | Método | Rota | Descrição |
@@ -252,3 +263,5 @@ python gerar_serial.py --validar XXXXX-XXXXX-XXXXX-XXXXX-XXXXX
 | `GET` | `/api/licenca/status` | Estado atual da licença |
 | `GET` | `/api/licenca/maquina` | ID desta máquina (para suporte) |
 | `POST` | `/api/licenca/ativar` | Ativa com `{ "serial": "..." }` |
+| `GET` | `/api/licenca/ativacoes` | Lista ativações e resumo por serial (requer login) |
+| `DELETE` | `/api/licenca/ativacoes/{id}` | Revoga uma ativação (requer login) |

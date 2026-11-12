@@ -497,3 +497,108 @@ def desativar(limpar_historico: bool = False) -> None:
         conn.commit()
     finally:
         conn.close()
+
+
+# ---------------------------------------------------------------------------
+# Consultas administrativas (painel de ativações)
+# ---------------------------------------------------------------------------
+
+def listar_ativacoes() -> list[dict]:
+    """Lista todas as ativações registradas nesta instalação.
+
+    Cada item traz o serial, o ID da máquina, quando foi ativado e um
+    indicador de ser (ou não) a máquina atual.
+    """
+    atual = obter_id_maquina()
+    conn = get_connection()
+    try:
+        _garantir_tabela(conn)
+        rows = conn.execute(
+            """
+            SELECT id, serial, id_maquina, ativado_em
+            FROM ativacoes
+            ORDER BY ativado_em DESC, id DESC
+            """
+        ).fetchall()
+    finally:
+        conn.close()
+
+    return [
+        {
+            "id": r["id"],
+            "serial": r["serial"],
+            "id_maquina": r["id_maquina"],
+            "ativado_em": r["ativado_em"],
+            "maquina_atual": r["id_maquina"] == atual,
+        }
+        for r in rows
+    ]
+
+
+def resumo_seriais() -> list[dict]:
+    """Agrupa as ativações por serial, com contagem de máquinas por serial."""
+    conn = get_connection()
+    try:
+        _garantir_tabela(conn)
+        rows = conn.execute(
+            """
+            SELECT serial,
+                   COUNT(*) AS maquinas,
+                   MIN(ativado_em) AS primeira_ativacao,
+                   MAX(ativado_em) AS ultima_ativacao
+            FROM ativacoes
+            GROUP BY serial
+            ORDER BY ultima_ativacao DESC
+            """
+        ).fetchall()
+
+        # Tenta descobrir o limite de cada serial (decodificando-o).
+        resultado = []
+        for r in rows:
+            info = _decodificar_serial(r["serial"])
+            limite = info.get("max_ativacoes") if info else None
+            tipo = info.get("tipo") if info else None
+            resultado.append({
+                "serial": r["serial"],
+                "tipo": tipo,
+                "maquinas": r["maquinas"],
+                "max_ativacoes": limite,
+                "restantes": (
+                    None if not limite else max(limite - r["maquinas"], 0)
+                ),
+                "primeira_ativacao": r["primeira_ativacao"],
+                "ultima_ativacao": r["ultima_ativacao"],
+            })
+        return resultado
+    finally:
+        conn.close()
+
+
+def revogar_ativacao(ativacao_id: int) -> bool:
+    """Remove uma ativação específica (libera uma vaga daquele serial).
+
+    Se a ativação removida for a desta máquina, a licença ativa local também
+    é desativada, forçando nova ativação.
+    """
+    conn = get_connection()
+    try:
+        _garantir_tabela(conn)
+        alvo = conn.execute(
+            "SELECT serial, id_maquina FROM ativacoes WHERE id = ?",
+            (ativacao_id,),
+        ).fetchone()
+        if not alvo:
+            return False
+
+        conn.execute("DELETE FROM ativacoes WHERE id = ?", (ativacao_id,))
+
+        # Se removemos a ativação da máquina atual, desativa a licença local.
+        if alvo["id_maquina"] == obter_id_maquina():
+            conn.execute(
+                "DELETE FROM licenca WHERE id = 1 AND serial = ?",
+                (alvo["serial"],),
+            )
+        conn.commit()
+        return True
+    finally:
+        conn.close()
