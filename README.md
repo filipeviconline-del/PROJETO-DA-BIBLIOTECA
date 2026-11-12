@@ -149,8 +149,14 @@ python3 instalador_grafico.py
 ```
 
 Passos do assistente: **boas-vindas → termos → pasta de instalação → opções de
-atalho → instalação (com barra de progresso) → concluir** (com opção de iniciar
-o sistema). Ele também gera um **desinstalador** na pasta instalada.
+atalho → número de série → instalação (com barra de progresso) → concluir**
+(com opção de iniciar o sistema). Ele também gera um **desinstalador** na pasta
+instalada.
+
+Na etapa **número de série**, você já pode **ativar o produto durante a
+instalação**: o serial é formatado e validado offline enquanto você digita, e a
+ativação é gravada direto no banco da instalação. O campo é opcional — se ficar
+em branco, o sistema pede o serial no primeiro acesso.
 
 > 🐧 **Linux:** o instalador gráfico usa Tkinter. Se faltar, instale uma vez:
 > `sudo apt install python3-tk` (Debian/Ubuntu/Mint) ou

@@ -100,10 +100,11 @@ class Instalador:
     """Executa os passos reais da instalação, reportando progresso."""
 
     def __init__(self, destino: Path, atalho_menu: bool, atalho_desktop: bool,
-                 log, progresso):
+                 log, progresso, serial: str = ""):
         self.destino = destino
         self.atalho_menu = atalho_menu
         self.atalho_desktop = atalho_desktop
+        self.serial = (serial or "").strip()
         self._log = log            # callable(str)
         self._progresso = progresso  # callable(int 0..100)
 
@@ -272,23 +273,64 @@ class Instalador:
             os.chmod(script, 0o755)
         self.log(f"Desinstalador criado: {script}")
 
+    def ativar_licenca(self):
+        """Ativa o produto com o serial informado, na instalação de destino.
+
+        Executa com o Python do .venv, no diretório instalado, para que a
+        ativação seja gravada no banco (biblioteca.db) da pasta correta.
+        """
+        if not self.serial:
+            self.log("Nenhum serial informado — ativação adiada para o 1º uso.")
+            return
+
+        self.log("Ativando o produto com o serial informado ...")
+        py = str(self.python_venv())
+        codigo = (
+            "import json, licenca; "
+            "print(json.dumps(licenca.ativar(__import__('sys').argv[1])))"
+        )
+        resultado = subprocess.run(
+            [py, "-c", codigo, self.serial],
+            cwd=str(self.destino), capture_output=True, text=True,
+        )
+
+        import json
+        dados = {}
+        try:
+            dados = json.loads((resultado.stdout or "").strip().splitlines()[-1])
+        except Exception:  # noqa: BLE001
+            dados = {}
+
+        if resultado.returncode == 0 and dados.get("sucesso"):
+            validade = dados.get("expira_em") or "sem expiração (perpétua)"
+            self.log(f"Produto ATIVADO! Tipo: {dados.get('tipo')} | "
+                     f"validade: {validade}")
+        else:
+            erro = dados.get("erro") or (resultado.stderr or "").strip()
+            # Não interrompe a instalação: o usuário poderá ativar no 1º uso.
+            self.log(f"[AVISO] Não foi possível ativar agora: {erro or 'erro'}")
+            self.log("        O sistema pedirá o serial no primeiro acesso.")
+
     def executar(self):
         """Roda todos os passos na ordem, atualizando a barra de progresso."""
         try:
             self.progresso(5)
             self.copiar_arquivos()
-            self.progresso(30)
+            self.progresso(28)
 
             self.criar_venv()
-            self.progresso(45)
+            self.progresso(42)
 
             self.instalar_dependencias()
-            self.progresso(85)
+            self.progresso(80)
 
             self.criar_atalhos()
-            self.progresso(92)
+            self.progresso(88)
 
             self.criar_desinstalador()
+            self.progresso(93)
+
+            self.ativar_licenca()
             self.progresso(100)
 
             self.log("\nInstalação concluída com sucesso!")
@@ -314,6 +356,7 @@ class Assistente(tk.Tk):
         self.op_menu = tk.BooleanVar(value=True)
         self.op_desktop = tk.BooleanVar(value=True)
         self.op_iniciar = tk.BooleanVar(value=True)
+        self.serial = tk.StringVar(value="")
         self._fila = queue.Queue()
         self._sucesso = False
 
@@ -325,6 +368,7 @@ class Assistente(tk.Tk):
             self._tela_termos,
             self._tela_pasta,
             self._tela_opcoes,
+            self._tela_serial,
             self._tela_instalacao,
             self._tela_conclusao,
         ]
@@ -427,6 +471,7 @@ class Assistente(tk.Tk):
             "   •  copiar o programa para a pasta escolhida;\n"
             "   •  preparar um ambiente isolado (ambiente virtual);\n"
             "   •  instalar as dependências necessárias;\n"
+            "   •  ativar o produto com o seu número de série;\n"
             "   •  criar atalhos para você abrir facilmente.\n\n"
             "Clique em \"Avançar\" para começar."
         )
@@ -492,6 +537,89 @@ class Assistente(tk.Tk):
         tk.Label(self.conteudo, text=resumo, bg=COR_BRANCO, fg=COR_MUTED,
                  font=("Helvetica", 9), justify="left", anchor="w").pack(
                      fill="x", pady=(16, 0))
+
+    def _tela_serial(self):
+        self._limpar_conteudo()
+        self._cabecalho(
+            "Ativação do produto",
+            "Informe o número de série para ativar o ToschiBook agora. "
+            "Se preferir, deixe em branco e ative no primeiro acesso.",
+        )
+
+        tk.Label(self.conteudo, text="Número de série", bg=COR_BRANCO,
+                 fg=COR_TEXTO, font=self.fonte_normal, anchor="w").pack(fill="x")
+
+        self.entrada_serial = tk.Entry(
+            self.conteudo, textvariable=self.serial, font=("Courier", 14),
+            justify="center", relief="solid", bd=1,
+        )
+        self.entrada_serial.pack(fill="x", ipady=7, pady=(4, 2))
+        self.entrada_serial.bind("<KeyRelease>", self._ao_digitar_serial)
+
+        # Mensagem de validação (atualizada ao digitar).
+        self.lbl_serial = tk.Label(
+            self.conteudo, text="Formato: XXXXX-XXXXX-XXXXX-XXXXX-XXXXX",
+            bg=COR_BRANCO, fg=COR_MUTED, font=("Helvetica", 9), anchor="w",
+        )
+        self.lbl_serial.pack(fill="x")
+
+        tk.Label(
+            self.conteudo,
+            text="\nO serial é validado offline. Após a instalação, você pode "
+                 "ver e gerenciar as ativações no painel \"Ativações\" do sistema.",
+            bg=COR_BRANCO, fg=COR_MUTED, font=("Helvetica", 9),
+            justify="left", anchor="w", wraplength=440,
+        ).pack(fill="x", pady=(10, 0))
+
+        self._ao_digitar_serial()
+
+    @staticmethod
+    def _formatar_serial(valor: str) -> str:
+        """Normaliza o texto do serial em grupos de 5 (A-Z e 2-9)."""
+        permitido = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
+        limpo = "".join(c for c in valor.upper() if c in permitido)[:25]
+        return "-".join(limpo[i:i + 5] for i in range(0, len(limpo), 5))
+
+    def _ao_digitar_serial(self, _evento=None):
+        formatado = self._formatar_serial(self.serial.get())
+        if formatado != self.serial.get():
+            self.serial.set(formatado)
+            self.entrada_serial.icursor("end")
+
+        limpo = formatado.replace("-", "")
+        if not limpo:
+            self.lbl_serial.config(
+                text="Deixe em branco para ativar depois, no primeiro acesso.",
+                fg=COR_MUTED)
+            return
+
+        if len(limpo) < 25:
+            self.lbl_serial.config(
+                text=f"Digite o serial completo ({len(limpo)}/25 caracteres).",
+                fg=COR_MUTED)
+            return
+
+        # Validação offline do serial (não requer Flask).
+        resultado = self._validar_serial_offline(formatado)
+        if resultado.get("valido"):
+            tipo = resultado.get("tipo", "—")
+            self.lbl_serial.config(
+                text=f"✓ Serial válido — licença: {tipo}.", fg=COR_PRIMARIA)
+        else:
+            self.lbl_serial.config(
+                text="✗ Serial inválido. Verifique os caracteres digitados.",
+                fg=COR_ERRO)
+
+    def _validar_serial_offline(self, serial: str) -> dict:
+        """Valida o serial importando o módulo licenca da origem."""
+        try:
+            if str(ORIGEM) not in sys.path:
+                sys.path.insert(0, str(ORIGEM))
+            import licenca
+            return licenca.validar_serial(serial)
+        except Exception:  # noqa: BLE001
+            # Se não conseguir importar, aceita o formato e valida na ativação.
+            return {"valido": True, "tipo": "a confirmar"}
 
     def _tela_instalacao(self):
         self._limpar_conteudo()
@@ -562,6 +690,20 @@ class Assistente(tk.Tk):
                 messagebox.showwarning(APP_NOME, "Informe uma pasta de instalação.")
                 return
 
+        # Validação do serial antes de sair da tela de serial.
+        if self.passos[self.indice] == self._tela_serial:
+            limpo = self.serial.get().replace("-", "").strip()
+            if limpo:  # só valida se o usuário digitou algo
+                if len(limpo) != 25 or not self._validar_serial_offline(
+                        self.serial.get()).get("valido"):
+                    if not messagebox.askyesno(
+                        APP_NOME,
+                        "O serial informado parece inválido.\n\n"
+                        "Deseja continuar mesmo assim? (você poderá ativar "
+                        "depois, no primeiro acesso)",
+                    ):
+                        return
+
         if self.indice < len(self.passos) - 1:
             self.indice += 1
             self._mostrar_passo()
@@ -608,6 +750,7 @@ class Assistente(tk.Tk):
             inst = Instalador(
                 Path(self.destino.get()), self.op_menu.get(),
                 self.op_desktop.get(), _log, _prog,
+                serial=self.serial.get(),
             )
             ok = inst.executar()
             self._fila.put(("fim", ok))
