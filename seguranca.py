@@ -29,6 +29,20 @@ _CHAVE_PADRAO = "ToschiBook-Chave-Mestra-2026-NAO-COMPARTILHAR"
 # Nome do arquivo opcional que guarda a chave fora do código-fonte.
 _ARQUIVO_CHAVE = os.environ.get("TOSCHIBOOK_LICENSE_KEY_FILE", "")
 
+# Arquivo de chave padrão, procurado ao lado deste módulo (licenca.key).
+# É o MESMO arquivo que a central de emissão (gerador_serial) cria, de modo
+# que o gerador e o produto usem automaticamente a mesma chave — sem o usuário
+# precisar definir variáveis de ambiente.
+_ARQUIVO_CHAVE_LOCAL = Path(__file__).resolve().parent / "licenca.key"
+
+
+def _ler_arquivo(caminho) -> str | None:
+    try:
+        dados = Path(caminho).read_text(encoding="utf-8").strip()
+        return dados or None
+    except OSError:
+        return None
+
 
 def _carregar_chave() -> tuple[bytes, bool]:
     """Carrega a chave mestra e informa se está usando o padrão inseguro.
@@ -36,19 +50,21 @@ def _carregar_chave() -> tuple[bytes, bool]:
     Ordem de prioridade:
       1. variável de ambiente TOSCHIBOOK_LICENSE_KEY;
       2. arquivo apontado por TOSCHIBOOK_LICENSE_KEY_FILE;
-      3. chave padrão de desenvolvimento (emite aviso).
+      3. arquivo ``licenca.key`` ao lado do código (criado pela central);
+      4. chave padrão de desenvolvimento (emite aviso).
     """
     valor = os.environ.get("TOSCHIBOOK_LICENSE_KEY")
     if valor:
         return valor.encode("utf-8"), False
 
     if _ARQUIVO_CHAVE:
-        try:
-            dados = Path(_ARQUIVO_CHAVE).read_text(encoding="utf-8").strip()
-            if dados:
-                return dados.encode("utf-8"), False
-        except OSError:
-            pass
+        dados = _ler_arquivo(_ARQUIVO_CHAVE)
+        if dados:
+            return dados.encode("utf-8"), False
+
+    dados = _ler_arquivo(_ARQUIVO_CHAVE_LOCAL)
+    if dados:
+        return dados.encode("utf-8"), False
 
     return _CHAVE_PADRAO.encode("utf-8"), True
 

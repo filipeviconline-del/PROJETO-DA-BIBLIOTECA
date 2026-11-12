@@ -336,11 +336,27 @@ Recursos de segurança da central:
   registrado com tipo, validade, limite, data e cliente — e o `historico`
   acusa se alguma linha foi adulterada.
 
-> 🔒 `licenca.key`, `seriais_emitidos.jsonl` e CSVs exportados são **segredos/dados
-> de venda** e já estão no `.gitignore` — **nunca** os versione nem distribua.
-> Para o produto validar os seriais, use a MESMA chave: aponte
-> `TOSCHIBOOK_LICENSE_KEY_FILE` para o `licenca.key` ou defina
-> `TOSCHIBOOK_LICENSE_KEY` com o conteúdo dele.
+#### "Serial inválido ou corrompido" ao ativar?
+
+Quase sempre significa que o **serial foi gerado com uma chave diferente** da que
+o sistema usa para validar. O produto e o gerador precisam da **mesma chave**.
+
+A busca da chave segue esta ordem (o produto e o gerador compartilham o mesmo
+`seguranca.py`): variável `TOSCHIBOOK_LICENSE_KEY` → arquivo em
+`TOSCHIBOOK_LICENSE_KEY_FILE` → arquivo **`licenca.key`** ao lado do código →
+chave padrão. Ou seja: **basta o `licenca.key` (criado pela central) estar na
+mesma pasta do sistema** que gerador e produto usam a mesma chave automaticamente.
+
+Para confirmar, compare as impressões digitais (devem ser iguais):
+
+```bash
+python3 gerador_serial.py chave          # chave do GERADOR
+python3 -c "import seguranca; print(seguranca.impressao_digital_chave())"   # chave do SISTEMA
+```
+
+Se forem diferentes, copie o `licenca.key` para a pasta do sistema (ou defina
+`TOSCHIBOOK_LICENSE_KEY_FILE`/`TOSCHIBOOK_LICENSE_KEY` com a mesma chave) e gere
+um novo serial.
 
 ### 🔐 Proteções contra cracking
 
