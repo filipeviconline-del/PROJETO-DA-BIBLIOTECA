@@ -273,6 +273,120 @@ def validar_serial(serial: str) -> dict:
 
 
 # ---------------------------------------------------------------------------
+# Código de ativação por máquina (desafio/resposta — offline)
+# ---------------------------------------------------------------------------
+# Diferente do serial universal (25 chars), este CÓDIGO é vinculado a um ID de
+# máquina específico: só ativa naquele computador. Útil para liberar o acesso
+# ao cliente que te enviou o ID da máquina dele.
+#
+# Formato (texto no ALFABETO, em blocos de 5, com prefixo legível "TBM-"):
+#   payload = "TBM" + tipo(1) + validade_dias(2) + id_maquina_hash(8) = 14 bytes
+#   assinatura = HMAC(payload)[:8]  -> 22 bytes no total
+# O id_maquina_hash são os 8 primeiros bytes do SHA-256 do ID da máquina, o que
+# amarra o código àquela máquina sem precisar embutir o ID inteiro.
+
+PREFIXO_MAQUINA = b"TBM"
+
+
+def _hash_maquina(id_maquina: str) -> bytes:
+    """Resumo de 8 bytes do ID da máquina (para embutir no código)."""
+    return hashlib.sha256(id_maquina.strip().upper().encode()).digest()[:8]
+
+
+def gerar_codigo_maquina(id_maquina: str, tipo: str = "perpetua",
+                         dias_validade: int | None = None) -> str:
+    """Gera um CÓDIGO de ativação vinculado a uma máquina específica.
+
+    Args:
+        id_maquina: o ID que o cliente enviou (visto na tela de ativação).
+        tipo: tipo de licença (de ``TIPOS_LICENCA``).
+        dias_validade: sobrescreve a validade padrão do tipo (opcional).
+
+    Returns:
+        Código no formato ``TBM-XXXXX-XXXXX-...`` (só ativa naquela máquina).
+    """
+    if tipo not in TIPOS_LICENCA:
+        raise ValueError(f"Tipo de licença inválido: {tipo}")
+    if not id_maquina or not str(id_maquina).strip():
+        raise ValueError("Informe o ID da máquina do cliente.")
+    if dias_validade is None:
+        dias_validade = TIPOS_LICENCA[tipo]
+
+    cod_tipo = list(TIPOS_LICENCA).index(tipo)
+    payload = (PREFIXO_MAQUINA
+               + struct.pack(">BH", cod_tipo, min(dias_validade, 65535))
+               + _hash_maquina(id_maquina))  # 3 + 3 + 8 = 14 bytes
+    assinatura = hmac.new(CHAVE_SECRETA, payload, hashlib.sha256).digest()[:8]
+    bruto = payload + assinatura  # 22 bytes
+
+    texto = _bytes_para_texto(bruto).rjust(36, ALFABETO[0])[:36]
+    return "TBM-" + _formatar_grupos(texto)
+
+
+def _decodificar_codigo_maquina(codigo: str) -> dict | None:
+    """Decodifica e valida a assinatura de um código de máquina."""
+    limpo = codigo.strip().upper().replace("-", "").replace(" ", "")
+    if limpo.startswith("TBM"):
+        limpo = limpo[3:]  # remove o prefixo legível, se presente
+    if not re.fullmatch(f"[{ALFABETO}]{{36}}", limpo):
+        return None
+
+    try:
+        bruto = _texto_para_bytes(limpo, 22)
+    except (ValueError, OverflowError):
+        return None
+
+    payload, assinatura = bruto[:14], bruto[14:]
+    if payload[:3] != PREFIXO_MAQUINA:
+        return None
+
+    esperada = hmac.new(CHAVE_SECRETA, payload, hashlib.sha256).digest()[:8]
+    if not hmac.compare_digest(esperada, assinatura):
+        return None
+
+    cod_tipo, dias = struct.unpack(">BH", payload[3:6])
+    hash_maquina = payload[6:14]
+    tipos = list(TIPOS_LICENCA)
+    if cod_tipo >= len(tipos):
+        return None
+
+    return {
+        "tipo": tipos[cod_tipo],
+        "dias_validade": dias,
+        "hash_maquina": hash_maquina,
+        "max_ativacoes": 1,  # código de máquina é sempre para 1 máquina
+    }
+
+
+def validar_codigo_maquina(codigo: str, id_maquina: str | None = None) -> dict:
+    """Valida um código de máquina e confere se é para ESTA máquina.
+
+    Args:
+        codigo: o código no formato TBM-...
+        id_maquina: a máquina a conferir (padrão: a máquina atual).
+    """
+    info = _decodificar_codigo_maquina(codigo)
+    if info is None:
+        return {"valido": False, "erro": "Código inválido ou corrompido."}
+
+    alvo = id_maquina if id_maquina is not None else obter_id_maquina()
+    if not hmac.compare_digest(info["hash_maquina"], _hash_maquina(alvo)):
+        return {
+            "valido": False,
+            "erro": "Este código foi gerado para outro computador.",
+            "motivo": "maquina_diferente",
+        }
+
+    return {
+        "valido": True,
+        "tipo": info["tipo"],
+        "dias_validade": info["dias_validade"],
+        "max_ativacoes": 1,
+        "vinculado_maquina": True,
+    }
+
+
+# ---------------------------------------------------------------------------
 # Persistência da ativação
 # ---------------------------------------------------------------------------
 
@@ -398,12 +512,22 @@ def _checar_relogio(conn) -> bool:
 
 
 def ativar(serial: str) -> dict:
-    """Ativa o produto com o serial informado, vinculando à máquina atual.
+    """Ativa o produto com o serial OU código de máquina informado.
 
-    Respeita o limite de ativações (nº de máquinas distintas) embutido no
-    serial. Reativar na MESMA máquina não consome uma nova ativação.
+    Aceita dois formatos:
+      * serial universal (25 chars) — ativa em até N máquinas distintas;
+      * código de máquina (``TBM-...``) — só ativa NESTA máquina (desafio/resposta).
+
+    Reativar na MESMA máquina não consome uma nova ativação.
     """
-    resultado = validar_serial(serial)
+    entrada = (serial or "").strip()
+
+    # Código vinculado à máquina (TBM-...)?
+    if entrada.upper().replace("-", "").startswith("TBM"):
+        resultado = validar_codigo_maquina(entrada)
+    else:
+        resultado = validar_serial(entrada)
+
     if not resultado["valido"]:
         return {"sucesso": False, "erro": resultado.get("erro", "Serial inválido.")}
 

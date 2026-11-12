@@ -37,13 +37,15 @@
                         id="serial"
                         name="serial"
                         class="serial-input"
-                        placeholder="XXXXX-XXXXX-XXXXX-XXXXX-XXXXX"
-                        maxlength="29"
+                        placeholder="Serial XXXXX-... ou código TBM-..."
+                        maxlength="48"
                         autocomplete="off"
                         spellcheck="false"
                         inputmode="latin"
                     >
                     <small class="error-message" id="serialError"></small>
+                    <small class="serial-hint">Aceita o serial padrão ou um
+                        código de ativação exclusivo desta máquina (TBM-...).</small>
                 </div>
 
                 <button type="submit" class="activate-button" id="activateButton">
@@ -57,7 +59,11 @@
             <div class="machine-box">
                 <span class="machine-label">ID desta máquina</span>
                 <code id="machineId">...</code>
-                <small>Informe este código ao suporte caso precise de um novo serial.</small>
+                <button type="button" class="copy-machine" id="copyMachine">
+                    Copiar ID
+                </button>
+                <small>Envie este ID ao suporte para receber um código de
+                    ativação exclusivo para este computador.</small>
             </div>
 
             <div class="activation-footer">

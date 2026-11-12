@@ -119,6 +119,7 @@ class GeradorGUI(tk.Tk):
     # =====================================================================
     def _construir_abas(self):
         self._aba_emitir()
+        self._aba_maquina()
         self._aba_historico()
         self._aba_validar()
         self._aba_chave()
@@ -226,6 +227,100 @@ class GeradorGUI(tk.Tk):
             f"{len(emitidos)} serial(is) emitido(s) e registrado(s) no histórico.")
         if hasattr(self, "_recarregar_historico"):
             self._recarregar_historico()
+
+    # ---------- ABA: Código por máquina (desafio/resposta) ----------
+    def _aba_maquina(self):
+        aba = tk.Frame(self.abas, bg=COR_BRANCO)
+        self.abas.add(aba, text="  Código p/ máquina  ")
+
+        tk.Label(aba,
+                 text=("Gere um código de ativação EXCLUSIVO para o computador "
+                       "do cliente.\nPeça ao cliente o 'ID desta máquina' (aparece "
+                       "na tela de ativação dele),\ncole abaixo e envie o código "
+                       "gerado. Ele só ativa naquela máquina."),
+                 bg=COR_BRANCO, fg=COR_MUTED, font=self.f_peq,
+                 justify="left", anchor="w").pack(fill="x", padx=20, pady=(16, 8))
+
+        form = tk.Frame(aba, bg=COR_BRANCO)
+        form.pack(fill="x", padx=20)
+
+        tk.Label(form, text="ID da máquina do cliente", bg=COR_BRANCO,
+                 fg=COR_TEXTO, font=self.f_normal).grid(row=0, column=0, sticky="w", pady=6)
+        self.e_maquina = tk.Entry(form, font=("Courier", 12), width=28,
+                                  relief="solid", bd=1)
+        self.e_maquina.grid(row=0, column=1, sticky="w", padx=10)
+
+        tk.Label(form, text="Tipo de licença", bg=COR_BRANCO, fg=COR_TEXTO,
+                 font=self.f_normal).grid(row=1, column=0, sticky="w", pady=6)
+        self.cb_tipo_m = ttk.Combobox(form, values=list(self.licenca.TIPOS_LICENCA),
+                                      state="readonly", width=18)
+        self.cb_tipo_m.set("anual")
+        self.cb_tipo_m.grid(row=1, column=1, sticky="w", padx=10)
+
+        tk.Label(form, text="Cliente / pedido (opcional)", bg=COR_BRANCO,
+                 fg=COR_TEXTO, font=self.f_normal).grid(row=2, column=0, sticky="w", pady=6)
+        self.e_cliente_m = tk.Entry(form, width=28)
+        self.e_cliente_m.grid(row=2, column=1, sticky="w", padx=10)
+
+        tk.Button(aba, text="Gerar código para esta máquina",
+                  command=self._gerar_codigo_maquina, relief="flat",
+                  bg=COR_PRIMARIA, fg=COR_BRANCO, activebackground=COR_ESCURA,
+                  activeforeground=COR_BRANCO,
+                  font=("Helvetica", 11, "bold"), padx=16, pady=8).pack(pady=12)
+
+        tk.Label(aba, text="Código gerado (envie ao cliente):", bg=COR_BRANCO,
+                 fg=COR_MUTED, font=self.f_peq, anchor="w").pack(fill="x", padx=20)
+        self.txt_codigo = tk.Text(aba, height=3, bg="#0c1f16", fg="#bfe9d2",
+                                  relief="flat", font=("Courier", 12), wrap="word")
+        self.txt_codigo.pack(fill="x", padx=20, pady=(4, 10))
+        self.txt_codigo.config(state="disabled")
+
+        tk.Button(aba, text="Copiar código", command=self._copiar_codigo,
+                  relief="flat", bg=COR_CLARA, fg=COR_ESCURA).pack(padx=20, anchor="w")
+
+    def _gerar_codigo_maquina(self):
+        self._recarregar()
+        if self.seguranca.usando_chave_insegura():
+            if not messagebox.askyesno(
+                APP_NOME,
+                "Você está com a CHAVE PADRÃO (insegura). O código pode não ser "
+                "aceito.\n\nGerar mesmo assim (apenas testes)?"):
+                return
+        maquina = self.e_maquina.get().strip().upper()
+        if not maquina:
+            messagebox.showwarning(APP_NOME, "Informe o ID da máquina do cliente.")
+            return
+        tipo = self.cb_tipo_m.get()
+        cliente = self.e_cliente_m.get().strip()
+        try:
+            codigo = self.licenca.gerar_codigo_maquina(maquina, tipo=tipo)
+        except ValueError as e:
+            messagebox.showerror(APP_NOME, str(e))
+            return
+
+        import datetime as dt
+        core._registrar_emissao(self.seguranca, {
+            "serial": codigo, "tipo": tipo,
+            "dias_validade": self.licenca.TIPOS_LICENCA[tipo],
+            "max_ativacoes": 1,
+            "emitido_em": dt.datetime.now().isoformat(timespec="seconds"),
+            "cliente": cliente + f" [maquina {maquina}]",
+        })
+
+        self.txt_codigo.config(state="normal")
+        self.txt_codigo.delete("1.0", "end")
+        self.txt_codigo.insert("end", codigo)
+        self.txt_codigo.config(state="disabled")
+        if hasattr(self, "_recarregar_historico"):
+            self._recarregar_historico()
+
+    def _copiar_codigo(self):
+        texto = self.txt_codigo.get("1.0", "end").strip()
+        if not texto:
+            return
+        self.clipboard_clear()
+        self.clipboard_append(texto)
+        messagebox.showinfo(APP_NOME, "Código copiado para a área de transferência.")
 
     # ---------- ABA: Histórico ----------
     def _aba_historico(self):

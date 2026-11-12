@@ -13,16 +13,31 @@ if (yearEl) yearEl.textContent = new Date().getFullYear();
 // Alfabeto aceito no serial (sem caracteres ambíguos).
 const ALFABETO = /[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]/;
 
-/* Formata o que o usuário digita em grupos de 5: XXXXX-XXXXX-... */
+/* Formata o que o usuário digita em grupos de 5.
+   Aceita dois formatos:
+     - serial universal: XXXXX-XXXXX-XXXXX-XXXXX-XXXXX (25 caracteres)
+     - código de máquina: TBM-XXXXX-... (36 caracteres após o prefixo) */
 function formatarSerial(valor) {
-    const limpo = valor
-        .toUpperCase()
-        .split("")
-        .filter((c) => ALFABETO.test(c))
-        .join("")
-        .slice(0, 25);
+    const bruto = valor.toUpperCase().replace(/[^A-Z0-9]/g, "");
 
+    // Código vinculado à máquina (começa com TBM)
+    if (bruto.startsWith("TBM")) {
+        const corpo = bruto.slice(3)
+            .split("").filter((c) => ALFABETO.test(c)).join("").slice(0, 36);
+        const grupos = corpo.match(/.{1,5}/g)?.join("-") ?? "";
+        return grupos ? "TBM-" + grupos : "TBM-";
+    }
+
+    // Serial universal
+    const limpo = bruto.split("").filter((c) => ALFABETO.test(c)).join("").slice(0, 25);
     return limpo.match(/.{1,5}/g)?.join("-") ?? "";
+}
+
+/* Comprimento (sem hífens) esperado conforme o formato digitado. */
+function tamanhoEsperado(valor) {
+    return valor.toUpperCase().replace(/[^A-Z0-9]/g, "").startsWith("TBM")
+        ? 39   // TBM + 36
+        : 25;
 }
 
 serialInput.addEventListener("input", (e) => {
@@ -56,6 +71,28 @@ async function carregarMaquina() {
     }
 }
 
+/* Botão "Copiar ID" — facilita o cliente enviar o ID ao suporte. */
+const copyMachineBtn = document.getElementById("copyMachine");
+if (copyMachineBtn) {
+    copyMachineBtn.addEventListener("click", async () => {
+        const id = (machineIdEl.textContent || "").trim();
+        if (!id || id === "indisponível" || id === "...") return;
+        try {
+            await navigator.clipboard.writeText(id);
+            const original = copyMachineBtn.textContent;
+            copyMachineBtn.textContent = "Copiado!";
+            setTimeout(() => (copyMachineBtn.textContent = original), 1500);
+        } catch {
+            // Fallback: seleciona o texto para o usuário copiar manualmente.
+            const faixa = document.createRange();
+            faixa.selectNodeContents(machineIdEl);
+            const sel = window.getSelection();
+            sel.removeAllRanges();
+            sel.addRange(faixa);
+        }
+    });
+}
+
 /* Se já estiver ativado, não faz sentido ficar nesta tela. */
 async function verificarJaAtivado() {
     try {
@@ -74,13 +111,16 @@ form.addEventListener("submit", async (e) => {
     e.preventDefault();
     const serial = serialInput.value.trim();
 
-    if (serial.replace(/-/g, "").length !== 25) {
-        serialError.textContent = "O serial deve ter 25 caracteres.";
+    const semHifen = serial.replace(/-/g, "").length;
+    if (semHifen !== tamanhoEsperado(serial)) {
+        serialError.textContent = serial.toUpperCase().startsWith("TBM")
+            ? "Código de ativação incompleto."
+            : "O serial deve ter 25 caracteres.";
         return;
     }
 
     carregando(true);
-    mostrarStatus("Validando serial...", "");
+    mostrarStatus("Validando...", "");
 
     try {
         const resp = await fetch(apiUrl("/api/licenca/ativar"), {

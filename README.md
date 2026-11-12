@@ -298,8 +298,11 @@ robusta que gerencia a chave, registra tudo o que é emitido e tem menu interati
 # 1) Primeiro uso: cria uma CHAVE MESTRA forte e aleatória (salva em licenca.key)
 python gerador_serial.py chave --criar
 
-# 2) Emite seriais (registrados em um log assinado), vinculados a um cliente
+# 2) Emite seriais universais (registrados em um log assinado), p/ um cliente
 python gerador_serial.py emitir --tipo anual -q 5 --cliente "Escola Modelo"
+
+# 2b) Verifica se a chave está consistente (evita "serial inválido")
+python gerador_serial.py diagnostico
 
 # 3) Consulta o histórico do que já foi emitido (com verificação de integridade)
 python gerador_serial.py historico
@@ -312,8 +315,27 @@ python gerador_serial.py exportar --saida seriais.csv
 python gerador_serial.py
 ```
 
+#### Ativação por desafio/resposta (código exclusivo da máquina)
+
+Para liberar o acesso a um cliente específico **sem internet**, use o fluxo de
+desafio/resposta:
+
+1. O cliente abre o produto e vê, na tela de ativação, o **ID desta máquina**
+   (há um botão **Copiar ID**). Ele te envia esse ID.
+2. Você gera um **código vinculado àquela máquina**:
+   ```bash
+   python gerador_serial.py codigo --maquina 4ED8F65E214F88C3 --tipo anual --cliente "João"
+   ```
+   Isso devolve um código no formato `TBM-...`.
+3. Você envia o código ao cliente; ele cola na mesma tela de ativação e ativa.
+
+O código `TBM-...` **só funciona naquele computador** (é assinado com o ID da
+máquina) — se alguém tentar usá-lo em outro PC, é recusado. Seriais universais
+(`XXXXX-...`) continuam funcionando normalmente para quando você quer um serial
+que ativa em qualquer máquina (respeitando o limite de ativações).
+
 **Prefere interface gráfica?** Abra a central em janela (Tkinter), com abas para
-**Emitir, Histórico, Validar e Chave**:
+**Emitir, Código p/ máquina, Histórico, Validar e Chave**:
 
 ```bash
 python3 gerador_serial_gui.py
