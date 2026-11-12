@@ -137,7 +137,27 @@ A aplicação está sendo desenvolvida por uma equipe utilizando boas práticas 
 
 O ToschiBook é uma aplicação web local (servidor **Flask** + interface no navegador).
 
-### Opção A — Rodar a partir do código-fonte
+### Opção A — Instalador gráfico (assistente) ⭐ recomendado
+
+Um assistente visual no estilo *Avançar → Avançar → Concluir*, com a identidade
+do ToschiBook (logo e cores verdes), que copia o programa, prepara o ambiente,
+instala as dependências e cria atalhos — tudo com cliques.
+
+```bash
+python3 instalador_grafico.py
+# atalhos:  ./instalador.sh  (Linux/macOS)  |  instalador.bat  (Windows)
+```
+
+Passos do assistente: **boas-vindas → termos → pasta de instalação → opções de
+atalho → instalação (com barra de progresso) → concluir** (com opção de iniciar
+o sistema). Ele também gera um **desinstalador** na pasta instalada.
+
+> 🐧 **Linux:** o instalador gráfico usa Tkinter. Se faltar, instale uma vez:
+> `sudo apt install python3-tk` (Debian/Ubuntu/Mint) ou
+> `sudo dnf install python3-tkinter` (Fedora). No Windows e macOS o Tkinter já
+> vem com o Python.
+
+### Opção B — Rodar a partir do código-fonte (linha de comando)
 
 ```bash
 # 1. Clone o repositório e entre na pasta
@@ -171,7 +191,7 @@ Para instalar no Python atual, sem criar um venv: `python3 instalar.py --sem-ven
 > 🐧 Se a criação do venv falhar no Debian/Ubuntu/Mint, instale-o uma vez:
 > `sudo apt install python3-venv python3-full` e rode de novo.
 
-### Opção B — Gerar o executável / instalador
+### Opção C — Gerar o executável / instalador
 
 ```bash
 # Instala dependências e empacota com o PyInstaller
