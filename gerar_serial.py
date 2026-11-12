@@ -18,6 +18,15 @@ Exemplos de uso:
     # Gera um trial de 15 dias
     python gerar_serial.py --tipo trial --dias 15
 
+    # Gera licença corporativa com até 50 ativações (máquinas)
+    python gerar_serial.py --tipo corporativa --ativacoes 50
+
+    # Gera licença com ativações ILIMITADAS
+    python gerar_serial.py --tipo perpetua --ativacoes 0
+
+    # Lista os tipos de licença disponíveis
+    python gerar_serial.py --listar-tipos
+
     # Valida um serial existente
     python gerar_serial.py --validar ABCDE-FGHJK-LMNPQ-RSTUV-WXYZ2
 """
@@ -27,13 +36,38 @@ import sys
 import licenca
 
 
-def gerar(tipo: str, quantidade: int, dias: int | None) -> None:
-    print(f"\n== Gerando {quantidade} serial(is) do tipo '{tipo}' ==\n")
+def _rotulo_validade(dias: int) -> str:
+    return "perpetua" if dias == 0 else f"{dias} dias"
+
+
+def _rotulo_ativacoes(n: int) -> str:
+    return "ilimitadas" if n == 0 else f"{n} maquina(s)"
+
+
+def listar_tipos() -> None:
+    print("\n== Tipos de licenca disponiveis ==\n")
+    print(f"  {'tipo':<14}{'validade':<14}{'ativacoes (padrao)'}")
+    print(f"  {'-'*12:<14}{'-'*12:<14}{'-'*18}")
+    for tipo, dias in licenca.TIPOS_LICENCA.items():
+        ativ = licenca.ATIVACOES_PADRAO.get(tipo, 1)
+        print(f"  {tipo:<14}{_rotulo_validade(dias):<14}{_rotulo_ativacoes(ativ)}")
+    print()
+
+
+def gerar(tipo: str, quantidade: int, dias: int | None,
+          ativacoes: int | None) -> None:
+    validade = dias if dias is not None else licenca.TIPOS_LICENCA[tipo]
+    max_ativ = ativacoes if ativacoes is not None else licenca.ATIVACOES_PADRAO.get(tipo, 1)
+
+    print(f"\n== Gerando {quantidade} serial(is) do tipo '{tipo}' ==")
+    print(f"   Validade: {_rotulo_validade(validade)}  |  "
+          f"Ativacoes: {_rotulo_ativacoes(max_ativ)}\n")
+
     for i in range(1, quantidade + 1):
-        serial = licenca.gerar_serial(tipo=tipo, dias_validade=dias)
-        validade = dias if dias is not None else licenca.TIPOS_LICENCA[tipo]
-        rotulo = "perpétua" if validade == 0 else f"{validade} dias"
-        print(f"  {i:>3}. {serial}   ({rotulo})")
+        serial = licenca.gerar_serial(
+            tipo=tipo, dias_validade=dias, max_ativacoes=ativacoes
+        )
+        print(f"  {i:>3}. {serial}")
     print()
 
 
@@ -44,6 +78,7 @@ def validar(serial: str) -> None:
         print("  [VALIDO]")
         print(f"    Tipo ............ {resultado['tipo']}")
         print(f"    Validade (dias).. {resultado['dias_validade'] or 'perpetua'}")
+        print(f"    Ativacoes ....... {_rotulo_ativacoes(resultado.get('max_ativacoes', 1))}")
         print(f"    Identificador ... {resultado['identificador']}")
     else:
         print(f"  [INVALIDO]  - {resultado.get('erro')}")
@@ -67,10 +102,23 @@ def main() -> int:
         help="Validade em dias (sobrescreve o padrão do tipo).",
     )
     parser.add_argument(
+        "--ativacoes", "-a", type=int, default=None,
+        help="Limite de ativações/máquinas (0 = ilimitado). "
+             "Sobrescreve o padrão do tipo.",
+    )
+    parser.add_argument(
+        "--listar-tipos", action="store_true",
+        help="Lista os tipos de licença e sai.",
+    )
+    parser.add_argument(
         "--validar", metavar="SERIAL",
         help="Valida um serial em vez de gerar.",
     )
     args = parser.parse_args()
+
+    if args.listar_tipos:
+        listar_tipos()
+        return 0
 
     if args.validar:
         validar(args.validar)
@@ -80,7 +128,11 @@ def main() -> int:
         print("A quantidade deve ser >= 1.", file=sys.stderr)
         return 1
 
-    gerar(args.tipo, args.quantidade, args.dias)
+    if args.ativacoes is not None and args.ativacoes < 0:
+        print("O limite de ativações deve ser >= 0 (0 = ilimitado).", file=sys.stderr)
+        return 1
+
+    gerar(args.tipo, args.quantidade, args.dias, args.ativacoes)
     return 0
 
 

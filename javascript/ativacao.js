@@ -94,8 +94,14 @@ form.addEventListener("submit", async (e) => {
             const validade = dados.expira_em
                 ? ` Válida até ${dados.expira_em}.`
                 : " Licença perpétua.";
-            mostrarStatus((dados.mensagem || "Ativado!") + validade, "sucesso");
-            setTimeout(() => (window.location.href = "index.html"), 1500);
+            let ativacoes = "";
+            if (dados.max_ativacoes && dados.max_ativacoes > 0) {
+                ativacoes = ` Ativações: ${dados.ativacoes_usadas}/${dados.max_ativacoes}.`;
+            } else if (dados.max_ativacoes === 0) {
+                ativacoes = " Ativações ilimitadas.";
+            }
+            mostrarStatus((dados.mensagem || "Ativado!") + validade + ativacoes, "sucesso");
+            setTimeout(() => (window.location.href = "index.html"), 1800);
         } else {
             mostrarStatus(dados.erro || "Não foi possível ativar.", "erro");
         }

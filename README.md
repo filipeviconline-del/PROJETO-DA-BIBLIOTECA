@@ -179,11 +179,40 @@ ativado, qualquer página é redirecionada para a tela de ativação
 
 - O serial tem o formato `XXXXX-XXXXX-XXXXX-XXXXX-XXXXX`.
 - Ele é **assinado criptograficamente (HMAC-SHA256)** e carrega, de forma
-  embutida, o tipo da licença e a validade — por isso a validação é **offline**,
-  sem precisar de servidor de licenças.
+  embutida, o tipo da licença, a validade e o **limite de ativações** — por isso
+  a validação é **offline**, sem precisar de servidor de licenças.
 - Ao ativar, a licença é **vinculada ao computador** (fingerprint de hardware) e
   guardada no banco. Um serial ativado numa máquina não vale em outra.
-- Licenças do tipo `trial`/`anual` têm **data de expiração**; a `perpetua` não expira.
+- Licenças com prazo (`trial`, `mensal`, `anual`, etc.) têm **data de expiração**;
+  `perpetua`/`vitalicia` não expiram.
+
+### Tipos de licença
+
+| Tipo | Validade | Ativações (padrão) |
+|---|---|---|
+| `trial` | 30 dias | 1 |
+| `mensal` | 30 dias | 1 |
+| `trimestral` | 90 dias | 1 |
+| `semestral` | 180 dias | 2 |
+| `anual` | 365 dias | 3 |
+| `bienal` | 730 dias | 3 |
+| `perpetua` | perpétua | 1 |
+| `vitalicia` | perpétua | 1 |
+| `educacional` | 365 dias | 30 |
+| `corporativa` | 365 dias | 100 |
+
+Veja a tabela a qualquer momento com `python gerar_serial.py --listar-tipos`.
+
+### Limite de ativações
+
+Cada serial permite ser ativado em um número máximo de **máquinas distintas**,
+embutido e assinado no próprio serial (`0` = ilimitado). Reativar na mesma
+máquina **não** consome uma nova ativação; ao atingir o limite, novas máquinas
+são recusadas com uma mensagem clara.
+
+> ℹ️ Como o sistema é **offline** (cada instalação tem seu próprio banco), a
+> contagem de ativações é mantida **localmente por instalação**. Para um controle
+> global de ativações entre computadores seria necessário um servidor de licenças.
 
 ### Gerar seriais (uso administrativo)
 
@@ -198,6 +227,15 @@ python gerar_serial.py --tipo anual --quantidade 5
 
 # trial de 15 dias
 python gerar_serial.py --tipo trial --dias 15
+
+# licença corporativa com até 50 máquinas
+python gerar_serial.py --tipo corporativa --ativacoes 50
+
+# ativações ilimitadas
+python gerar_serial.py --tipo perpetua --ativacoes 0
+
+# listar os tipos de licença
+python gerar_serial.py --listar-tipos
 
 # validar um serial existente
 python gerar_serial.py --validar XXXXX-XXXXX-XXXXX-XXXXX-XXXXX
