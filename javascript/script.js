@@ -131,13 +131,8 @@ loginForm.addEventListener("submit", async (event) => {
 
 forgotPassword.addEventListener("click", (event) => {
     event.preventDefault();
-
-    clearStatus();
-
-    statusMessage.textContent =
-        "Entre em contato com o administrador para redefinir sua senha.";
-
-    statusMessage.classList.add("success");
+    // Leva para a tela de recuperação por pergunta de segurança.
+    window.location.href = "recuperar.html";
 });
 
 emailInput.addEventListener("input", () => {

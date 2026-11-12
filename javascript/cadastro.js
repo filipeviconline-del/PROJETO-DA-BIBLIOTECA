@@ -4,6 +4,8 @@ const nameInput = document.getElementById("name");
 const usernameInput = document.getElementById("username");
 const emailInput = document.getElementById("email");
 const registrationInput = document.getElementById("registration");
+const securityQuestionInput = document.getElementById("securityQuestion");
+const securityAnswerInput = document.getElementById("securityAnswer");
 const passwordInput = document.getElementById("password");
 const confirmPasswordInput = document.getElementById("confirmPassword");
 const termsInput = document.getElementById("terms");
@@ -80,6 +82,17 @@ function validateForm() {
         isValid = false;
     }
 
+    if (securityQuestionInput.value.trim() === "") {
+        showError(securityQuestionInput,
+            "Escolha uma pergunta de segurança (para recuperar a senha).");
+        isValid = false;
+    }
+
+    if (securityAnswerInput.value.trim().length < 2) {
+        showError(securityAnswerInput, "Informe a resposta de segurança.");
+        isValid = false;
+    }
+
     if (passwordInput.value.length < 6) {
         showError(
             passwordInput,
@@ -138,6 +151,8 @@ registerForm.addEventListener("submit", async (event) => {
                 email: emailInput.value.trim(),
                 matricula: registrationInput.value.trim(),
                 senha: passwordInput.value,
+                pergunta_seguranca: securityQuestionInput.value.trim(),
+                resposta_seguranca: securityAnswerInput.value.trim(),
             }),
         });
 
@@ -172,6 +187,7 @@ registerForm.addEventListener("submit", async (event) => {
     usernameInput,
     emailInput,
     registrationInput,
+    securityAnswerInput,
     passwordInput,
     confirmPasswordInput
 ].forEach((input) => {
@@ -179,6 +195,11 @@ registerForm.addEventListener("submit", async (event) => {
         clearError(input);
         setStatus("", "");
     });
+});
+
+securityQuestionInput.addEventListener("change", () => {
+    clearError(securityQuestionInput);
+    setStatus("", "");
 });
 
 termsInput.addEventListener("change", () => {

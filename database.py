@@ -71,6 +71,8 @@ def init_db():
                 email TEXT UNIQUE NOT NULL,
                 matricula TEXT,
                 senha_hash TEXT NOT NULL,
+                pergunta_seguranca TEXT,
+                resposta_hash TEXT,
                 criado_em TEXT DEFAULT CURRENT_TIMESTAMP
             );
             """
@@ -81,6 +83,16 @@ def init_db():
             conn.execute("ALTER TABLE livros ADD COLUMN capa TEXT")
         except Exception:
             pass  # Coluna já existe
+
+        # Migração segura: pergunta/resposta de segurança (recuperação de senha)
+        for ddl in (
+            "ALTER TABLE contas ADD COLUMN pergunta_seguranca TEXT",
+            "ALTER TABLE contas ADD COLUMN resposta_hash TEXT",
+        ):
+            try:
+                conn.execute(ddl)
+            except Exception:
+                pass  # Coluna já existe
 
         conn.commit()
     finally:

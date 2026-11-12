@@ -6,6 +6,14 @@ from database import get_connection
 auth = Blueprint("auth", __name__, url_prefix="/api/auth")
 
 
+def _normalizar_resposta(texto: str) -> str:
+    """Normaliza a resposta de segurança (sem caixa/espaços extras).
+
+    Assim 'Rex', ' rex ' e 'REX' são equivalentes na recuperação.
+    """
+    return " ".join(str(texto or "").strip().lower().split())
+
+
 @auth.post("/cadastro")
 def cadastro():
     """Cria uma nova conta de usuário."""
@@ -21,11 +29,19 @@ def cadastro():
     email = dados["email"].strip().lower()
     matricula = dados.get("matricula", "").strip()
     senha = dados["senha"]
+    pergunta = str(dados.get("pergunta_seguranca", "")).strip()
+    resposta = str(dados.get("resposta_seguranca", "")).strip()
 
     if len(senha) < 6:
         return jsonify({"erro": "A senha deve ter pelo menos 6 caracteres."}), 400
 
+    # Pergunta/resposta de segurança são opcionais, mas vêm em par.
+    if pergunta and not resposta:
+        return jsonify({"erro": "Informe a resposta da pergunta de segurança."}), 400
+
     senha_hash = generate_password_hash(senha)
+    resposta_hash = (generate_password_hash(_normalizar_resposta(resposta))
+                     if pergunta and resposta else None)
 
     conn = get_connection()
     try:
@@ -40,10 +56,13 @@ def cadastro():
 
         cur = conn.execute(
             """
-            INSERT INTO contas (nome, usuario, email, matricula, senha_hash)
-            VALUES (?, ?, ?, ?, ?)
+            INSERT INTO contas
+                (nome, usuario, email, matricula, senha_hash,
+                 pergunta_seguranca, resposta_hash)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
             """,
-            (nome, usuario, email, matricula, senha_hash),
+            (nome, usuario, email, matricula, senha_hash,
+             pergunta or None, resposta_hash),
         )
         conn.commit()
         conta_id = cur.lastrowid
@@ -136,3 +155,73 @@ def logout():
     """Encerra a sessão do usuário."""
     session.clear()
     return jsonify({"mensagem": "Sessão encerrada com sucesso."})
+
+
+# ---------------------------------------------------------------------------
+# Recuperação de senha (offline, por pergunta de segurança)
+# ---------------------------------------------------------------------------
+
+@auth.post("/recuperar/pergunta")
+def recuperar_pergunta():
+    """Dado o e-mail/usuário, retorna a pergunta de segurança da conta."""
+    dados = request.get_json(silent=True) or {}
+    identificador = str(dados.get("identificador", "")).strip().lower()
+    if not identificador:
+        return jsonify({"erro": "Informe seu e-mail ou usuário."}), 400
+
+    conn = get_connection()
+    try:
+        conta = conn.execute(
+            "SELECT pergunta_seguranca FROM contas WHERE email = ? OR usuario = ?",
+            (identificador, identificador),
+        ).fetchone()
+    finally:
+        conn.close()
+
+    # Mensagem neutra para não revelar se a conta existe.
+    if not conta or not conta["pergunta_seguranca"]:
+        return jsonify({
+            "erro": ("Não há recuperação por pergunta de segurança para esta "
+                     "conta. Contate o administrador da biblioteca."),
+        }), 404
+
+    return jsonify({"pergunta": conta["pergunta_seguranca"]})
+
+
+@auth.post("/recuperar/redefinir")
+def recuperar_redefinir():
+    """Valida a resposta de segurança e define uma nova senha."""
+    dados = request.get_json(silent=True) or {}
+    identificador = str(dados.get("identificador", "")).strip().lower()
+    resposta = str(dados.get("resposta", ""))
+    nova_senha = str(dados.get("nova_senha", ""))
+
+    if not identificador or not resposta or not nova_senha:
+        return jsonify({"erro": "Preencha todos os campos."}), 400
+
+    if len(nova_senha) < 6:
+        return jsonify({"erro": "A nova senha deve ter pelo menos 6 caracteres."}), 400
+
+    conn = get_connection()
+    try:
+        conta = conn.execute(
+            "SELECT id, resposta_hash FROM contas WHERE email = ? OR usuario = ?",
+            (identificador, identificador),
+        ).fetchone()
+
+        if not conta or not conta["resposta_hash"]:
+            return jsonify({"erro": "Não foi possível redefinir a senha."}), 404
+
+        if not check_password_hash(conta["resposta_hash"],
+                                   _normalizar_resposta(resposta)):
+            return jsonify({"erro": "Resposta de segurança incorreta."}), 401
+
+        conn.execute(
+            "UPDATE contas SET senha_hash = ? WHERE id = ?",
+            (generate_password_hash(nova_senha), conta["id"]),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+    return jsonify({"mensagem": "Senha redefinida com sucesso! Faça login."})

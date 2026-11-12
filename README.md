@@ -461,3 +461,23 @@ Depois de logar, acesse **Ativações** na barra lateral (`/html/admin.html`) pa
 | `POST` | `/api/licenca/ativar` | Ativa com `{ "serial": "..." }` |
 | `GET` | `/api/licenca/ativacoes` | Lista ativações e resumo por serial (requer login) |
 | `DELETE` | `/api/licenca/ativacoes/{id}` | Revoga uma ativação (requer login) |
+
+### 🔑 Recuperação de senha (offline, por pergunta de segurança)
+
+Como o sistema é **offline** (sem servidor de e-mail), a recuperação de senha
+usa uma **pergunta de segurança**:
+
+1. No **cadastro**, o usuário escolhe uma pergunta e informa a resposta (guardada
+   com *hash*, nunca em texto puro).
+2. Na tela de login, o link **"Esqueci minha senha"** leva a `recuperar.html`:
+   o usuário informa o e-mail/usuário → o sistema mostra a pergunta dele →
+   ele responde → se a resposta conferir, define uma nova senha.
+
+A resposta é comparada de forma tolerante (ignora maiúsculas/minúsculas e
+espaços). Contas antigas, sem pergunta cadastrada, recebem orientação para
+contatar o administrador.
+
+| Método | Rota | Descrição |
+|---|---|---|
+| `POST` | `/api/auth/recuperar/pergunta` | Retorna a pergunta de segurança da conta |
+| `POST` | `/api/auth/recuperar/redefinir` | Valida a resposta e define a nova senha |
