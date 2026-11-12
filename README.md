@@ -289,6 +289,46 @@ python gerar_serial.py --validar XXXXX-XXXXX-XXXXX-XXXXX-XXXXX
 > a variável de ambiente `TOSCHIBOOK_LICENSE_KEY` com um valor forte — **a mesma**
 > no gerador e no produto. Não distribua o `gerar_serial.py` com o produto final.
 
+### 🏭 Central de emissão de seriais (`gerador_serial.py`) — anti-cracker
+
+Para uso profissional, prefira a **central de emissão** — uma ferramenta mais
+robusta que gerencia a chave, registra tudo o que é emitido e tem menu interativo:
+
+```bash
+# 1) Primeiro uso: cria uma CHAVE MESTRA forte e aleatória (salva em licenca.key)
+python gerador_serial.py chave --criar
+
+# 2) Emite seriais (registrados em um log assinado), vinculados a um cliente
+python gerador_serial.py emitir --tipo anual -q 5 --cliente "Escola Modelo"
+
+# 3) Consulta o histórico do que já foi emitido (com verificação de integridade)
+python gerador_serial.py historico
+
+# 4) Valida um serial / exporta o histórico para CSV
+python gerador_serial.py validar XXXXX-XXXXX-XXXXX-XXXXX-XXXXX
+python gerador_serial.py exportar --saida seriais.csv
+
+# 5) Sem argumentos: abre um MENU interativo
+python gerador_serial.py
+```
+
+Recursos de segurança da central:
+
+- **Chave mestra forte gerada automaticamente** e salva fora do código em
+  `licenca.key` (permissão `600`); exibe uma **impressão digital** da chave para
+  você conferir que o produto usa a mesma (sem expor o segredo).
+- **Recusa emitir seriais reais com a chave padrão** insegura (use `--forcar`
+  só em testes).
+- **Log de emissões assinado** (`seriais_emitidos.jsonl`): cada serial fica
+  registrado com tipo, validade, limite, data e cliente — e o `historico`
+  acusa se alguma linha foi adulterada.
+
+> 🔒 `licenca.key`, `seriais_emitidos.jsonl` e CSVs exportados são **segredos/dados
+> de venda** e já estão no `.gitignore` — **nunca** os versione nem distribua.
+> Para o produto validar os seriais, use a MESMA chave: aponte
+> `TOSCHIBOOK_LICENSE_KEY_FILE` para o `licenca.key` ou defina
+> `TOSCHIBOOK_LICENSE_KEY` com o conteúdo dele.
+
 ### 🔐 Proteções contra cracking
 
 O módulo `seguranca.py` adiciona camadas que dificultam a adulteração das

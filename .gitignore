@@ -17,6 +17,13 @@ Output/
 # Mantemos o biblioteca.db versionado como base inicial; descomente se preferir ignorar.
 # biblioteca.db
 
+# SEGREDOS do licenciamento — NUNCA versionar!
+# Chave mestra de assinatura dos seriais e o log de emissões (dados de venda).
+licenca.key
+*.key
+seriais_emitidos.jsonl
+seriais*.csv
+
 # Sistema operacional / editores
 .DS_Store
 Thumbs.db

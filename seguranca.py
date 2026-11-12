@@ -131,3 +131,22 @@ def verificar_relogio(epoch: int, assinatura: str | None) -> bool:
     if not assinatura:
         return False
     return hmac.compare_digest(assinar_relogio(int(epoch)), assinatura)
+
+
+# ---------------------------------------------------------------------------
+# Geração/gestão da chave mestra (uso administrativo)
+# ---------------------------------------------------------------------------
+
+def gerar_chave_forte(tamanho_bytes: int = 48) -> str:
+    """Gera uma chave mestra forte e aleatória (texto seguro para URL)."""
+    import secrets
+    return secrets.token_urlsafe(tamanho_bytes)
+
+
+def impressao_digital_chave() -> str:
+    """Retorna uma 'impressão digital' curta da chave mestra em uso.
+
+    Permite conferir, sem expor a chave, se o gerador e o produto usam a MESMA
+    chave (as impressões digitais devem ser idênticas).
+    """
+    return hashlib.sha256(b"fp:" + CHAVE_SECRETA).hexdigest()[:12].upper()
