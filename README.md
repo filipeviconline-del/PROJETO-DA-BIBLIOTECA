@@ -312,6 +312,19 @@ python gerador_serial.py exportar --saida seriais.csv
 python gerador_serial.py
 ```
 
+**Prefere interface gráfica?** Abra a central em janela (Tkinter), com abas para
+**Emitir, Histórico, Validar e Chave**:
+
+```bash
+python3 gerador_serial_gui.py
+# atalhos:  ./gerador.sh  (Linux/macOS)  |  gerador.bat  (Windows)
+```
+
+A janela mostra, no topo, a **impressão digital da chave** em uso e tem as mesmas
+proteções da versão de linha de comando (criar chave forte, bloquear a chave
+padrão ao emitir, histórico com verificação de integridade e exportação CSV).
+No Linux, se faltar o Tkinter: `sudo apt install python3-tk`.
+
 Recursos de segurança da central:
 
 - **Chave mestra forte gerada automaticamente** e salva fora do código em
