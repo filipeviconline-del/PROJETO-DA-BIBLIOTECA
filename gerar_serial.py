@@ -116,6 +116,16 @@ def main() -> int:
     )
     args = parser.parse_args()
 
+    # Avisa o administrador se estiver assinando com a chave padrão insegura.
+    try:
+        import seguranca
+        if seguranca.usando_chave_insegura():
+            print("\n[AVISO] Gerando seriais com a CHAVE PADRAO (insegura).")
+            print("        Defina TOSCHIBOOK_LICENSE_KEY (a mesma no produto) "
+                  "antes de emitir seriais reais.\n")
+    except Exception:
+        pass
+
     if args.listar_tipos:
         listar_tipos()
         return 0

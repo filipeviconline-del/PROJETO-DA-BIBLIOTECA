@@ -29,22 +29,23 @@ import platform
 import re
 import struct
 import subprocess
+import time
 import uuid
 from datetime import date, datetime, timedelta
 
 from database import get_connection
+import seguranca
 
 # ---------------------------------------------------------------------------
 # Configuração
 # ---------------------------------------------------------------------------
 
-# Chave mestra usada para assinar/validar os seriais. Deve ser a MESMA no
-# gerador de seriais (fábrica) e no produto instalado. Troque por um valor
-# forte e secreto em produção através da variável de ambiente.
-CHAVE_SECRETA = os.environ.get(
-    "TOSCHIBOOK_LICENSE_KEY",
-    "ToschiBook-Chave-Mestra-2026-NAO-COMPARTILHAR",
-).encode("utf-8")
+# A chave mestra agora vem do módulo de segurança, que a carrega de fora do
+# código-fonte (variável de ambiente ou arquivo) e avisa se estiver usando a
+# chave padrão insegura. Os seriais são assinados com uma SUB-CHAVE derivada
+# (domain separation), de modo que a assinatura do serial é isolada das demais
+# finalidades (estado no banco, relógio).
+CHAVE_SECRETA = seguranca.chave_serial()
 
 # Alfabeto usado nos seriais (sem caracteres ambíguos: 0/O, 1/I).
 ALFABETO = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
@@ -286,17 +287,23 @@ def _garantir_tabela(conn) -> None:
             id_maquina TEXT NOT NULL,
             ativado_em TEXT NOT NULL,
             expira_em TEXT,
-            max_ativacoes INTEGER DEFAULT 1
+            max_ativacoes INTEGER DEFAULT 1,
+            assinatura TEXT
         )
         """
     )
-    # Migração segura: adiciona a coluna em bancos antigos.
-    try:
-        conn.execute("ALTER TABLE licenca ADD COLUMN max_ativacoes INTEGER DEFAULT 1")
-    except Exception:
-        pass  # coluna já existe
+    # Migrações seguras: adicionam colunas em bancos antigos.
+    for coluna, ddl in [
+        ("max_ativacoes", "ALTER TABLE licenca ADD COLUMN max_ativacoes INTEGER DEFAULT 1"),
+        ("assinatura", "ALTER TABLE licenca ADD COLUMN assinatura TEXT"),
+    ]:
+        try:
+            conn.execute(ddl)
+        except Exception:
+            pass  # coluna já existe
 
     # Histórico de ativações: cada (serial, máquina) distinto conta 1 ativação.
+    # A coluna 'assinatura' protege cada registro contra inserção/edição manual.
     conn.execute(
         """
         CREATE TABLE IF NOT EXISTS ativacoes (
@@ -304,19 +311,90 @@ def _garantir_tabela(conn) -> None:
             serial TEXT NOT NULL,
             id_maquina TEXT NOT NULL,
             ativado_em TEXT NOT NULL,
+            assinatura TEXT,
             UNIQUE (serial, id_maquina)
+        )
+        """
+    )
+    try:
+        conn.execute("ALTER TABLE ativacoes ADD COLUMN assinatura TEXT")
+    except Exception:
+        pass
+
+    # Auditoria de relógio (anti clock-rollback): guarda o maior horário já
+    # visto, assinado, para detectar quando o usuário atrasa o relógio.
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS relogio_auditoria (
+            id INTEGER PRIMARY KEY CHECK (id = 1),
+            ultimo_epoch INTEGER NOT NULL,
+            assinatura TEXT NOT NULL
         )
         """
     )
 
 
+# --- assinaturas de registro (anti-adulteração do banco) ---
+
+def _assinatura_licenca(serial, tipo, id_maquina, ativado_em, expira_em,
+                        max_ativacoes) -> str:
+    return seguranca.assinar_registro(
+        (serial, tipo, id_maquina, ativado_em, expira_em, max_ativacoes)
+    )
+
+
+def _assinatura_ativacao(serial, id_maquina, ativado_em) -> str:
+    return seguranca.assinar_registro((serial, id_maquina, ativado_em))
+
+
 def _contar_ativacoes(conn, serial: str) -> int:
-    """Nº de máquinas distintas que já ativaram este serial (localmente)."""
-    row = conn.execute(
-        "SELECT COUNT(*) FROM ativacoes WHERE serial = ?",
+    """Nº de máquinas distintas (com registro ÍNTEGRO) que ativaram o serial.
+
+    Registros cuja assinatura não confere (inseridos/editados manualmente no
+    banco) são ignorados na contagem — não valem como ativação.
+    """
+    rows = conn.execute(
+        "SELECT id_maquina, ativado_em, assinatura FROM ativacoes WHERE serial = ?",
         (serial,),
+    ).fetchall()
+    validos = 0
+    for r in rows:
+        if seguranca.verificar_registro(
+            (serial, r["id_maquina"], r["ativado_em"]), r["assinatura"]
+        ):
+            validos += 1
+    return validos
+
+
+# --- anti clock-rollback ---
+
+def _checar_relogio(conn) -> bool:
+    """Atualiza/verifica o 'último horário visto'. Retorna False se detectar
+    retrocesso significativo do relógio (possível fraude de validade)."""
+    agora = int(time.time())
+
+    row = conn.execute(
+        "SELECT ultimo_epoch, assinatura FROM relogio_auditoria WHERE id = 1"
     ).fetchone()
-    return row[0] if row else 0
+
+    ok = True
+    if row:
+        ultimo = int(row["ultimo_epoch"])
+        # Se a assinatura não bate, o registro foi adulterado.
+        if not seguranca.verificar_relogio(ultimo, row["assinatura"]):
+            ok = False
+        # Tolerância de 1 dia para fusos/ajustes legítimos.
+        elif agora < ultimo - 86400:
+            ok = False
+
+    # Guarda sempre o MAIOR horário já visto (monotônico).
+    novo = max(agora, int(row["ultimo_epoch"]) if row else agora)
+    conn.execute(
+        "INSERT OR REPLACE INTO relogio_auditoria (id, ultimo_epoch, assinatura) "
+        "VALUES (1, ?, ?)",
+        (novo, seguranca.assinar_relogio(novo)),
+    )
+    return ok
 
 
 def ativar(serial: str) -> dict:
@@ -365,32 +443,35 @@ def ativar(serial: str) -> dict:
                     "ativacoes_usadas": usadas,
                 }
 
-        # Registra a ativação desta máquina (idempotente por UNIQUE).
+        ts = ativado_em.isoformat(timespec="seconds")
+
+        # Registra a ativação desta máquina (idempotente por UNIQUE), ASSINADA.
+        assinatura_ativ = _assinatura_ativacao(serial_norm, id_maquina, ts)
         conn.execute(
             """
-            INSERT OR IGNORE INTO ativacoes (serial, id_maquina, ativado_em)
-            VALUES (?, ?, ?)
+            INSERT OR IGNORE INTO ativacoes (serial, id_maquina, ativado_em, assinatura)
+            VALUES (?, ?, ?, ?)
             """,
-            (serial_norm, id_maquina, ativado_em.isoformat(timespec="seconds")),
+            (serial_norm, id_maquina, ts, assinatura_ativ),
         )
 
-        # Define a licença ativa desta instalação.
+        # Define a licença ativa desta instalação, com assinatura de integridade.
+        assinatura_lic = _assinatura_licenca(
+            serial_norm, tipo, id_maquina, ts, expira_em, max_ativacoes)
         conn.execute("DELETE FROM licenca")
         conn.execute(
             """
             INSERT INTO licenca
-                (id, serial, tipo, id_maquina, ativado_em, expira_em, max_ativacoes)
-            VALUES (1, ?, ?, ?, ?, ?, ?)
+                (id, serial, tipo, id_maquina, ativado_em, expira_em,
+                 max_ativacoes, assinatura)
+            VALUES (1, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
-                serial_norm,
-                tipo,
-                id_maquina,
-                ativado_em.isoformat(timespec="seconds"),
-                expira_em,
-                max_ativacoes,
+                serial_norm, tipo, id_maquina, ts, expira_em,
+                max_ativacoes, assinatura_lic,
             ),
         )
+        _checar_relogio(conn)  # registra o horário de referência
         conn.commit()
 
         usadas = _contar_ativacoes(conn, serial_norm)
@@ -416,6 +497,8 @@ def status() -> dict:
     try:
         _garantir_tabela(conn)
         row = conn.execute("SELECT * FROM licenca WHERE id = 1").fetchone()
+        relogio_ok = _checar_relogio(conn)
+        conn.commit()
     finally:
         conn.close()
 
@@ -424,12 +507,33 @@ def status() -> dict:
 
     dados = dict(row)
 
-    # A licença precisa ter sido ativada NESTA máquina.
+    # 1) Integridade: o registro da licença não pode ter sido editado no banco.
+    if not seguranca.verificar_registro(
+        (dados["serial"], dados["tipo"], dados["id_maquina"],
+         dados["ativado_em"], dados.get("expira_em"), dados.get("max_ativacoes")),
+        dados.get("assinatura"),
+    ):
+        return {
+            "ativado": False,
+            "motivo": "adulterada",
+            "mensagem": "Os dados de licença foram adulterados. Reative o produto.",
+        }
+
+    # 2) A licença precisa ter sido ativada NESTA máquina.
     if dados["id_maquina"] != obter_id_maquina():
         return {
             "ativado": False,
             "motivo": "maquina_diferente",
             "mensagem": "Esta licença foi ativada em outro computador.",
+        }
+
+    # 3) Anti clock-rollback: relógio atrasado para burlar a validade.
+    if not relogio_ok:
+        return {
+            "ativado": False,
+            "motivo": "relogio_alterado",
+            "mensagem": ("Detectamos uma alteração suspeita no relógio do "
+                         "sistema. Ajuste a data/hora e reative o produto."),
         }
 
     expira_em = dados.get("expira_em")
@@ -515,7 +619,7 @@ def listar_ativacoes() -> list[dict]:
         _garantir_tabela(conn)
         rows = conn.execute(
             """
-            SELECT id, serial, id_maquina, ativado_em
+            SELECT id, serial, id_maquina, ativado_em, assinatura
             FROM ativacoes
             ORDER BY ativado_em DESC, id DESC
             """
@@ -530,6 +634,11 @@ def listar_ativacoes() -> list[dict]:
             "id_maquina": r["id_maquina"],
             "ativado_em": r["ativado_em"],
             "maquina_atual": r["id_maquina"] == atual,
+            # Registro íntegro? (assinatura confere). Falso = inserido/editado
+            # manualmente no banco -> não conta como ativação legítima.
+            "integra": seguranca.verificar_registro(
+                (r["serial"], r["id_maquina"], r["ativado_em"]), r["assinatura"]
+            ),
         }
         for r in rows
     ]
@@ -543,7 +652,6 @@ def resumo_seriais() -> list[dict]:
         rows = conn.execute(
             """
             SELECT serial,
-                   COUNT(*) AS maquinas,
                    MIN(ativado_em) AS primeira_ativacao,
                    MAX(ativado_em) AS ultima_ativacao
             FROM ativacoes
@@ -552,19 +660,20 @@ def resumo_seriais() -> list[dict]:
             """
         ).fetchall()
 
-        # Tenta descobrir o limite de cada serial (decodificando-o).
         resultado = []
         for r in rows:
             info = _decodificar_serial(r["serial"])
             limite = info.get("max_ativacoes") if info else None
             tipo = info.get("tipo") if info else None
+            # Conta apenas máquinas com registro ÍNTEGRO (assinatura válida).
+            maquinas = _contar_ativacoes(conn, r["serial"])
             resultado.append({
                 "serial": r["serial"],
                 "tipo": tipo,
-                "maquinas": r["maquinas"],
+                "maquinas": maquinas,
                 "max_ativacoes": limite,
                 "restantes": (
-                    None if not limite else max(limite - r["maquinas"], 0)
+                    None if not limite else max(limite - maquinas, 0)
                 ),
                 "primeira_ativacao": r["primeira_ativacao"],
                 "ultima_ativacao": r["ultima_ativacao"],

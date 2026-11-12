@@ -289,6 +289,31 @@ python gerar_serial.py --validar XXXXX-XXXXX-XXXXX-XXXXX-XXXXX
 > a variável de ambiente `TOSCHIBOOK_LICENSE_KEY` com um valor forte — **a mesma**
 > no gerador e no produto. Não distribua o `gerar_serial.py` com o produto final.
 
+### 🔐 Proteções contra cracking
+
+O módulo `seguranca.py` adiciona camadas que dificultam a adulteração das
+licenças (tudo com a biblioteca padrão, sem dependências extras):
+
+- **Chave fora do código-fonte** — a chave mestra é lida de
+  `TOSCHIBOOK_LICENSE_KEY` (ou de um arquivo em `TOSCHIBOOK_LICENSE_KEY_FILE`).
+  Se o produto rodar com a chave padrão de desenvolvimento, ele **avisa** no log
+  e no gerador. Sub-chaves derivadas (*domain separation*) isolam a assinatura
+  do serial da assinatura do estado e do relógio.
+- **Anti-adulteração do banco** — o registro da licença e cada ativação são
+  assinados (HMAC-SHA256). Se alguém **editar o `biblioteca.db`** (p. ex.
+  esticar `expira_em`, trocar a máquina ou inserir ativações falsas para furar o
+  limite), a assinatura não confere e a licença é recusada (`motivo: adulterada`)
+  ou o registro forjado **não conta** como ativação.
+- **Anti clock-rollback** — um registro assinado guarda o maior horário já visto.
+  Se o usuário **atrasar o relógio** para driblar a validade, o sistema detecta e
+  bloqueia (`motivo: relogio_alterado`).
+
+> ℹ️ Nenhuma proteção *client-side* é 100% inviolável contra quem controla
+> totalmente a máquina — o objetivo é **elevar muito o custo** do ataque
+> (edição de banco, falsificação de serial e manipulação de relógio deixam de
+> funcionar com edições triviais). Para garantias fortes de revogação e
+> contagem global de ativações, seria necessário um servidor de licenças.
+
 ### Painel administrativo de ativações
 
 Depois de logar, acesse **Ativações** na barra lateral (`/html/admin.html`) para:

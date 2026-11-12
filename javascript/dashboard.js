@@ -235,8 +235,51 @@ async function atualizarDashboard() {
     }
 }
 
+// ===== Status resumido da licença (chip no topo) =====
+async function carregarStatusLicenca() {
+    const chip = document.getElementById("licenseChip");
+    const chipIcon = document.getElementById("chipIcon");
+    const chipText = document.getElementById("chipText");
+    const chipDias = document.getElementById("chipDias");
+    if (!chip) return;
+
+    try {
+        const resp = await fetch(apiUrl("/api/licenca/status"));
+        const lic = await resp.json();
+        chip.hidden = false;
+        chip.classList.remove("ativo", "aviso", "inativo");
+
+        if (!lic.ativado) {
+            chip.classList.add("inativo");
+            chipText.textContent = lic.motivo === "expirada"
+                ? "Licença expirada"
+                : "Produto não ativado";
+            chipDias.hidden = true;
+            return;
+        }
+
+        if (!lic.expira_em) {
+            chip.classList.add("ativo");
+            chipText.textContent = `Produto ativado • licença ${lic.tipo} (perpétua)`;
+            chipDias.hidden = true;
+            return;
+        }
+
+        const dias = lic.dias_restantes ?? 0;
+        const aviso = dias <= 15;
+        chip.classList.add(aviso ? "aviso" : "ativo");
+        chipText.textContent =
+            `Produto ativado • licença ${lic.tipo} • válida até ${lic.expira_em}`;
+        chipDias.hidden = false;
+        chipDias.textContent = `${Math.max(dias, 0)} dias restantes`;
+    } catch {
+        chip.hidden = true;
+    }
+}
+
 todayDate.textContent = formatarDataAtual();
 
 refreshButton.addEventListener("click", atualizarDashboard);
 
 atualizarDashboard();
+carregarStatusLicenca();

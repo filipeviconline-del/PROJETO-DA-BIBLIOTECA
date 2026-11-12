@@ -39,6 +39,13 @@ app.register_blueprint(ativacao)
 # Exige ativação por serial antes de liberar o sistema.
 registrar_bloqueio(app)
 
+# Alerta no log se o produto estiver rodando com a chave de licença padrão
+# (insegura). Em produção, defina TOSCHIBOOK_LICENSE_KEY.
+import seguranca  # noqa: E402
+if seguranca.usando_chave_insegura():
+    print("[ToschiBook][SEGURANCA] Usando a CHAVE DE LICENCA PADRAO (insegura). "
+          "Defina a variavel de ambiente TOSCHIBOOK_LICENSE_KEY em producao.")
+
 
 @app.after_request
 def adicionar_cors(resposta):

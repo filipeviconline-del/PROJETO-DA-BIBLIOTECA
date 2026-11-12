@@ -504,3 +504,59 @@
         justify-content: center;
     }
 }
+
+/* ===== Chip de status da licença (dashboard) ===== */
+.license-chip {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+    padding: 12px 18px;
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    background: var(--white);
+    text-decoration: none;
+    color: var(--text-color);
+    transition: box-shadow 0.2s, transform 0.05s;
+}
+.license-chip:hover {
+    box-shadow: 0 6px 16px rgba(13, 79, 53, 0.1);
+}
+.license-chip.ativo { background: #eafaf1; border-color: #bfe3cd; }
+.license-chip.aviso { background: #fff7e6; border-color: #f3d9a3; }
+.license-chip.inativo { background: #fdecea; border-color: #f3c2bd; }
+
+.license-chip-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    color: #fff;
+    background: var(--primary-green);
+}
+.license-chip-icon .icon-svg { width: 18px; height: 18px; }
+.license-chip.aviso .license-chip-icon { background: #d98e04; }
+.license-chip.inativo .license-chip-icon { background: var(--error-color); }
+
+.license-chip-text {
+    flex: 1;
+    font-size: 14px;
+    font-weight: 600;
+}
+.license-chip-dias {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--dark-green);
+    padding: 3px 10px;
+    border-radius: 999px;
+    background: rgba(22, 115, 74, 0.1);
+}
+.license-chip.aviso .license-chip-dias { color: #a86a00; background: rgba(217,142,4,0.14); }
+.license-chip-link {
+    font-size: 12px;
+    color: var(--muted-color);
+    white-space: nowrap;
+}

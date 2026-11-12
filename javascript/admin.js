@@ -115,6 +115,14 @@ function renderizarBanner(licenca) {
             bannerTitulo.textContent = "Licença de outra máquina";
             bannerSubtitulo.textContent =
                 "Esta licença foi ativada em outro computador.";
+        } else if (motivo === "adulterada") {
+            bannerTitulo.textContent = "Licença adulterada";
+            bannerSubtitulo.textContent =
+                "Os dados de licença foram modificados. Reative o produto.";
+        } else if (motivo === "relogio_alterado") {
+            bannerTitulo.textContent = "Relógio do sistema alterado";
+            bannerSubtitulo.textContent =
+                "Detectamos retrocesso na data/hora. Ajuste o relógio e reative.";
         } else {
             bannerTitulo.textContent = "Produto não ativado";
             bannerSubtitulo.textContent = "Nenhuma licença ativa nesta máquina.";
