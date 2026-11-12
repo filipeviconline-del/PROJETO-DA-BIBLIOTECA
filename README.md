@@ -153,6 +153,16 @@ inicializa o banco e abre o sistema em `http://127.0.0.1:5000`.
 Para apenas instalar, sem iniciar: `python instalar.py --sem-iniciar`.
 Depois, inicie quando quiser com `python iniciar.py`.
 
+> 🐧 **Linux (Debian/Ubuntu/Mint):** se aparecer o erro
+> `externally-managed-environment` (PEP 668), use um ambiente virtual:
+> ```bash
+> python3 -m venv .venv
+> source .venv/bin/activate      # Windows: .venv\Scripts\activate
+> python instalar.py
+> ```
+> Nos próximos usos, ative o ambiente (`source .venv/bin/activate`) antes de
+> rodar `python iniciar.py`. Se faltar o venv: `sudo apt install python3-venv python3-full`.
+
 ### Opção B — Gerar o executável / instalador
 
 ```bash

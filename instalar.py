@@ -13,11 +13,21 @@ Uso:
     python instalar.py --sem-iniciar  # apenas instala
 """
 import argparse
+import os
 import subprocess
 import sys
 
 
 MIN_PYTHON = (3, 9)
+DIR_VENV = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".venv")
+
+
+def em_venv() -> bool:
+    """Indica se estamos rodando dentro de um ambiente virtual."""
+    return (
+        hasattr(sys, "real_prefix")
+        or sys.prefix != getattr(sys, "base_prefix", sys.prefix)
+    )
 
 
 def verificar_python():
@@ -28,12 +38,47 @@ def verificar_python():
     print(f"[OK] Python {sys.version.split()[0]}")
 
 
+def _ajuda_venv():
+    """Mostra instruções para criar/ativar um venv e sai."""
+    py = "python3" if os.name != "nt" else "python"
+    ativar = (
+        ".venv\\Scripts\\activate" if os.name == "nt"
+        else "source .venv/bin/activate"
+    )
+    print("\n" + "=" * 60)
+    print("  Seu sistema não permite instalar pacotes globalmente")
+    print("  (PEP 668 / externally-managed-environment).")
+    print("  Use um ambiente virtual — é rápido e seguro:")
+    print("=" * 60)
+    print(f"\n    {py} -m venv .venv")
+    print(f"    {ativar}")
+    print(f"    {py} instalar.py\n")
+    print("Depois, para iniciar o sistema novamente, basta ativar o")
+    print(f"ambiente ({ativar}) e rodar: {py} iniciar.py\n")
+    print("Se faltar o módulo venv, instale-o antes:")
+    print("    sudo apt install python3-venv python3-full   (Debian/Ubuntu/Mint)\n")
+
+
 def instalar_dependencias():
     print("\n>>> Instalando dependências...")
-    subprocess.check_call(
-        [sys.executable, "-m", "pip", "install", "-r", "requirements.txt"]
-    )
-    print("[OK] Dependências instaladas.")
+    comando = [sys.executable, "-m", "pip", "install", "-r", "requirements.txt"]
+    resultado = subprocess.run(comando, capture_output=True, text=True)
+
+    if resultado.returncode == 0:
+        print("[OK] Dependências instaladas.")
+        return
+
+    saida = (resultado.stdout or "") + (resultado.stderr or "")
+
+    # Caso clássico do PEP 668 em Linux: oriente o uso de venv.
+    if "externally-managed-environment" in saida and not em_venv():
+        _ajuda_venv()
+        sys.exit(1)
+
+    # Qualquer outra falha: mostra a saída real do pip.
+    print(saida.strip())
+    print("\n[ERRO] Falha ao instalar as dependências.")
+    sys.exit(1)
 
 
 def inicializar_banco():
