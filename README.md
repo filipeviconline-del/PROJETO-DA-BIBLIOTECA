@@ -139,22 +139,35 @@ O ToschiBook é uma aplicação web local (servidor **Flask** + interface no nav
 
 ### 🖱️ Atalhos clicáveis (sem terminal)
 
-Para não depender do terminal no dia a dia, crie os **ícones** uma única vez:
-
-- **Linux/macOS:** dê dois cliques em **`criar_atalhos.sh`** (ou rode `python3 criar_atalhos.py`)
-- **Windows:** dê dois cliques em **`criar_atalhos.bat`**
-
-Isso cria, na **Área de Trabalho** e no **menu de aplicativos**, dois ícones:
+A ideia: rodar **uma única vez** um instalador de atalhos; depois é só clicar nos
+ícones criados. Isso cria, na **Área de Trabalho** e no **menu de aplicativos**:
 
 - **ToschiBook** — abre o sistema (servidor + navegador);
 - **ToschiBook - Seriais** — abre a central de emissão de seriais (uso administrativo).
 
-A partir daí é só **clicar no ícone** — nunca mais precisa do terminal. Para
-criar só o atalho do sistema (ex.: na máquina do cliente), use
-`python3 criar_atalhos.py --sistema`.
+**Forma mais garantida (uma vez só):**
 
-> 🐧 No Linux, se o ícone na Área de Trabalho pedir confirmação na primeira vez,
-> clique com o botão direito → "Permitir execução" / "Confiar neste aplicativo".
+```bash
+cd PROJETO-DA-BIBLIOTECA
+python3 criar_atalhos.py           # cria os dois atalhos
+# (na máquina do cliente, só o do sistema:)
+python3 criar_atalhos.py --sistema
+```
+
+**Por duplo-clique:**
+- **Windows:** dê dois cliques em **`criar_atalhos.bat`**.
+- **Linux:** dê dois cliques em **`Instalar atalhos do ToschiBook.desktop`** (ou em
+  `criar_atalhos.sh`).
+
+> 🐧 **Atenção (Linux):** por segurança, o Linux **não executa** scripts com
+> duplo-clique por padrão — por isso o `.sh`/`.desktop` pode "não fazer nada" ou
+> abrir como texto na primeira vez. Soluções:
+> - clique com o **botão direito** no arquivo → "Executar" / "Executar como programa"; ou
+> - clique direito → "Propriedades" → "Permissões" → marque **"Permitir execução"**
+>   e dê dois cliques de novo; ou
+> - simplesmente rode **`python3 criar_atalhos.py`** no terminal uma vez (sempre funciona).
+>
+> Depois dessa primeira vez, use os **ícones ToschiBook** normalmente — sem terminal.
 > O ícone é gerado em `assets/toschibook.png` pelo `criar_icone.py`.
 
 ### Opção A — Instalador gráfico (assistente) ⭐ recomendado
