@@ -88,6 +88,30 @@
                 </div>
             </header>
 
+            <!-- Banner de status da licença -->
+            <section class="license-banner" id="licenseBanner" aria-live="polite">
+                <div class="license-banner-main">
+                    <span class="license-banner-icon" id="bannerIcon">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon-svg"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                    </span>
+                    <div class="license-banner-text">
+                        <strong id="bannerTitulo">Verificando licença...</strong>
+                        <span id="bannerSubtitulo">Aguarde um instante</span>
+                    </div>
+                    <div class="license-banner-dias" id="bannerDiasBox" hidden>
+                        <strong id="bannerDias">—</strong>
+                        <span>dias restantes</span>
+                    </div>
+                </div>
+                <div class="license-progress" id="licenseProgressWrap" hidden>
+                    <div class="license-progress-bar" id="licenseProgressBar"></div>
+                </div>
+                <div class="license-progress-legend" id="licenseProgressLegend" hidden>
+                    <span id="legendInicio">—</span>
+                    <span id="legendFim">—</span>
+                </div>
+            </section>
+
             <!-- Resumo da licença atual -->
             <section class="stats-grid" aria-label="Resumo da licença">
                 <article class="stat-card">

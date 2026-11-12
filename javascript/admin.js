@@ -2,6 +2,18 @@
 
 const refreshButton = document.getElementById("refreshButton");
 
+// Banner de status da licença
+const licenseBanner = document.getElementById("licenseBanner");
+const bannerTitulo = document.getElementById("bannerTitulo");
+const bannerSubtitulo = document.getElementById("bannerSubtitulo");
+const bannerDiasBox = document.getElementById("bannerDiasBox");
+const bannerDias = document.getElementById("bannerDias");
+const progressWrap = document.getElementById("licenseProgressWrap");
+const progressBar = document.getElementById("licenseProgressBar");
+const progressLegend = document.getElementById("licenseProgressLegend");
+const legendInicio = document.getElementById("legendInicio");
+const legendFim = document.getElementById("legendFim");
+
 const statTipo = document.getElementById("statTipo");
 const statAtivacoes = document.getElementById("statAtivacoes");
 const statValidade = document.getElementById("statValidade");
@@ -74,6 +86,92 @@ function renderizarResumoLicenca(licenca, idMaquina) {
     } else {
         statValidade.textContent = "Perpétua";
     }
+}
+
+function formatarData(valor) {
+    if (!valor) return "—";
+    const d = new Date(valor);
+    if (isNaN(d)) return valor;
+    return d.toLocaleDateString("pt-BR", {
+        day: "2-digit", month: "2-digit", year: "numeric",
+    });
+}
+
+function definirEstadoBanner(estado) {
+    licenseBanner.classList.remove("ativo", "aviso", "inativo");
+    licenseBanner.classList.add(estado);
+}
+
+function renderizarBanner(licenca) {
+    // Produto NÃO ativado / expirado / outra máquina
+    if (!licenca || !licenca.ativado) {
+        definirEstadoBanner("inativo");
+        const motivo = licenca && licenca.motivo;
+        if (motivo === "expirada") {
+            bannerTitulo.textContent = "Licença expirada";
+            bannerSubtitulo.textContent =
+                "Informe um novo serial para voltar a usar o sistema.";
+        } else if (motivo === "maquina_diferente") {
+            bannerTitulo.textContent = "Licença de outra máquina";
+            bannerSubtitulo.textContent =
+                "Esta licença foi ativada em outro computador.";
+        } else {
+            bannerTitulo.textContent = "Produto não ativado";
+            bannerSubtitulo.textContent = "Nenhuma licença ativa nesta máquina.";
+        }
+        bannerDiasBox.hidden = true;
+        progressWrap.hidden = true;
+        progressLegend.hidden = true;
+        return;
+    }
+
+    // Produto ativado
+    const tipo = licenca.tipo || "—";
+
+    // Licença perpétua (sem expiração)
+    if (!licenca.expira_em) {
+        definirEstadoBanner("ativo");
+        bannerTitulo.textContent = "Produto ativado";
+        bannerSubtitulo.textContent =
+            `Licença ${tipo} • sem data de expiração (perpétua).`;
+        bannerDiasBox.hidden = true;
+        progressWrap.hidden = true;
+        progressLegend.hidden = true;
+        return;
+    }
+
+    // Licença com validade -> mostra dias restantes e barra de progresso
+    const dias = licenca.dias_restantes ?? 0;
+    const aviso = dias <= 15;  // destaca quando falta pouco
+    definirEstadoBanner(aviso ? "aviso" : "ativo");
+
+    bannerTitulo.textContent = aviso
+        ? "Licença ativa — expira em breve"
+        : "Produto ativado";
+    bannerSubtitulo.textContent =
+        `Licença ${tipo} • válida até ${formatarData(licenca.expira_em)}.`;
+
+    bannerDias.textContent = Math.max(dias, 0);
+    bannerDiasBox.hidden = false;
+
+    // Barra: quanto do período total já passou.
+    progressWrap.hidden = false;
+    progressLegend.hidden = false;
+
+    const fim = new Date(licenca.expira_em + "T00:00:00");
+    const inicio = licenca.ativado_em ? new Date(licenca.ativado_em) : null;
+    let pct = 0;
+    if (inicio && !isNaN(inicio) && !isNaN(fim) && fim > inicio) {
+        const total = fim - inicio;
+        const decorrido = Date.now() - inicio;
+        pct = Math.min(Math.max((decorrido / total) * 100, 0), 100);
+    } else {
+        // Sem data de início: estima pelo tipo não é possível -> barra cheia parcial.
+        pct = dias <= 0 ? 100 : 0;
+    }
+    progressBar.style.width = pct.toFixed(1) + "%";
+    legendInicio.textContent = inicio ? formatarData(licenca.ativado_em) : "Início";
+    legendFim.textContent = formatarData(licenca.expira_em);
 }
 
 function renderizarSeriais(lista) {
@@ -179,6 +277,7 @@ async function carregar() {
     refreshButton.disabled = true;
     try {
         const dados = await buscar("/api/licenca/ativacoes");
+        renderizarBanner(dados.licenca);
         renderizarResumoLicenca(dados.licenca, dados.id_maquina);
         renderizarSeriais(dados.resumo_seriais || []);
         renderizarAtivacoes(dados.ativacoes || []);

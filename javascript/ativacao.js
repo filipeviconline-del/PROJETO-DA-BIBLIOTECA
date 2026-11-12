@@ -91,17 +91,27 @@ form.addEventListener("submit", async (e) => {
         const dados = await resp.json();
 
         if (resp.ok && dados.sucesso) {
-            const validade = dados.expira_em
-                ? ` Válida até ${dados.expira_em}.`
-                : " Licença perpétua.";
+            let validade;
+            if (dados.expira_em) {
+                const fim = new Date(dados.expira_em + "T00:00:00");
+                const diasRest = Math.max(
+                    Math.ceil((fim - Date.now()) / 86400000), 0);
+                validade = ` Válida até ${dados.expira_em} (${diasRest} dias restantes).`;
+            } else {
+                validade = " Licença perpétua (sem expiração).";
+            }
             let ativacoes = "";
             if (dados.max_ativacoes && dados.max_ativacoes > 0) {
                 ativacoes = ` Ativações: ${dados.ativacoes_usadas}/${dados.max_ativacoes}.`;
             } else if (dados.max_ativacoes === 0) {
                 ativacoes = " Ativações ilimitadas.";
             }
-            mostrarStatus((dados.mensagem || "Ativado!") + validade + ativacoes, "sucesso");
-            setTimeout(() => (window.location.href = "index.html"), 1800);
+            mostrarStatus(
+                "✓ " + (dados.mensagem || "Produto ativado!") + validade + ativacoes
+                + " Redirecionando...",
+                "sucesso");
+            // Tempo maior para o usuário conseguir ler a confirmação.
+            setTimeout(() => (window.location.href = "index.html"), 3500);
         } else {
             mostrarStatus(dados.erro || "Não foi possível ativar.", "erro");
         }

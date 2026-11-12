@@ -47,3 +47,116 @@
     border-radius: 8px;
     font-size: 14px;
 }
+
+/* ===== Banner de status da licença ===== */
+.license-banner {
+    margin-bottom: 20px;
+    padding: 20px 24px;
+    border-radius: 14px;
+    border: 1px solid var(--border-color);
+    background: var(--white);
+    box-shadow: 0 6px 18px rgba(13, 79, 53, 0.06);
+}
+
+/* Estados do banner */
+.license-banner.ativo {
+    background: linear-gradient(135deg, #eafaf1, #ffffff 60%);
+    border-color: #bfe3cd;
+}
+.license-banner.aviso {
+    background: linear-gradient(135deg, #fff7e6, #ffffff 60%);
+    border-color: #f3d9a3;
+}
+.license-banner.inativo {
+    background: linear-gradient(135deg, #fdecea, #ffffff 60%);
+    border-color: #f3c2bd;
+}
+
+.license-banner-main {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.license-banner-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    color: var(--white);
+    background: var(--primary-green);
+}
+.license-banner-icon .icon-svg {
+    width: 26px;
+    height: 26px;
+}
+.license-banner.aviso .license-banner-icon { background: #d98e04; }
+.license-banner.inativo .license-banner-icon { background: var(--error-color); }
+
+.license-banner-text {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-width: 0;
+}
+.license-banner-text strong {
+    font-size: 18px;
+    color: var(--text-color);
+}
+.license-banner-text span {
+    font-size: 13px;
+    color: var(--muted-color);
+    margin-top: 2px;
+}
+
+.license-banner-dias {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 6px 18px;
+    border-radius: 12px;
+    background: rgba(22, 115, 74, 0.08);
+}
+.license-banner-dias strong {
+    font-size: 26px;
+    line-height: 1;
+    color: var(--dark-green);
+}
+.license-banner-dias span {
+    font-size: 11px;
+    color: var(--muted-color);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+.license-banner.aviso .license-banner-dias { background: rgba(217, 142, 4, 0.12); }
+.license-banner.aviso .license-banner-dias strong { color: #a86a00; }
+
+/* Barra de progresso de validade */
+.license-progress {
+    margin-top: 16px;
+    height: 10px;
+    border-radius: 999px;
+    background: var(--light-green);
+    overflow: hidden;
+}
+.license-progress-bar {
+    height: 100%;
+    width: 0%;
+    border-radius: 999px;
+    background: linear-gradient(90deg, var(--primary-green), #35c07e);
+    transition: width 0.6s ease;
+}
+.license-banner.aviso .license-progress-bar {
+    background: linear-gradient(90deg, #e0a106, #f0c04b);
+}
+
+.license-progress-legend {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 6px;
+    font-size: 11px;
+    color: var(--muted-color);
+}

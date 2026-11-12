@@ -293,6 +293,9 @@ python gerar_serial.py --validar XXXXX-XXXXX-XXXXX-XXXXX-XXXXX
 
 Depois de logar, acesse **Ativações** na barra lateral (`/html/admin.html`) para:
 
+- ver, em um **banner de status bem visível**, se o produto está **ativado**,
+  com os **dias restantes** e uma **barra de progresso** da validade (fica
+  amarelo quando faltam 15 dias ou menos, e vermelho se a licença expirou);
 - ver a **licença atual** desta máquina (tipo, validade, ativações usadas/limite e o ID da máquina);
 - consultar o **resumo por serial** (quantas máquinas cada serial ativou e quantas vagas restam);
 - listar todas as **máquinas ativadas**, identificando qual é a máquina atual;
