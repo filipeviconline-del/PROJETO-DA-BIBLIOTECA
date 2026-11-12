@@ -54,6 +54,14 @@ def licenca_ativar():
     return jsonify(resultado)
 
 
+@ativacao.post("/api/licenca/diagnosticar")
+def licenca_diagnosticar():
+    """Analisa um serial/código e explica por que não ativa (sem ativar)."""
+    dados = request.get_json(silent=True) or {}
+    serial = str(dados.get("serial", "")).strip()
+    return jsonify(licenca.diagnosticar(serial))
+
+
 # ---------- Painel administrativo de ativações ----------
 
 def _exige_login():

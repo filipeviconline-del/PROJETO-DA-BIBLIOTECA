@@ -154,6 +154,8 @@ form.addEventListener("submit", async (e) => {
             setTimeout(() => (window.location.href = "index.html"), 3500);
         } else {
             mostrarStatus(dados.erro || "Não foi possível ativar.", "erro");
+            // Falhou: roda o diagnóstico automaticamente para explicar o motivo.
+            diagnosticar(serial);
         }
     } catch {
         mostrarStatus("Erro de conexão com o servidor.", "erro");
@@ -161,6 +163,62 @@ form.addEventListener("submit", async (e) => {
         carregando(false);
     }
 });
+
+/* ===== Diagnóstico de ativação ===== */
+const diagnoseButton = document.getElementById("diagnoseButton");
+const diagnoseBox = document.getElementById("diagnoseBox");
+const diagTitulo = document.getElementById("diagTitulo");
+const diagMensagem = document.getElementById("diagMensagem");
+const diagSugestao = document.getElementById("diagSugestao");
+const diagExtra = document.getElementById("diagExtra");
+
+const TITULOS_PROBLEMA = {
+    vazio: "Campo vazio",
+    tamanho: "Código incompleto",
+    chave_ou_corrompido: "Chave diferente ou código corrompido",
+    maquina_diferente: "Código de outro computador",
+};
+
+async function diagnosticar(serial) {
+    try {
+        const resp = await fetch(apiUrl("/api/licenca/diagnosticar"), {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ serial }),
+        });
+        const d = await resp.json();
+
+        diagnoseBox.hidden = false;
+        diagnoseBox.classList.toggle("ok", !!d.ok);
+        diagnoseBox.classList.toggle("erro", !d.ok);
+
+        if (d.ok) {
+            diagTitulo.textContent = "✓ Tudo certo com este código";
+            diagMensagem.textContent = d.mensagem || "";
+            diagSugestao.textContent = d.sugestao || "Clique em 'Ativar produto'.";
+        } else {
+            diagTitulo.textContent =
+                "✗ " + (TITULOS_PROBLEMA[d.problema] || "Não foi possível ativar");
+            diagMensagem.textContent = d.mensagem || "";
+            diagSugestao.textContent = d.sugestao || "";
+        }
+        diagExtra.textContent =
+            `ID desta máquina: ${d.id_maquina || "—"}  •  Chave: ${d.impressao_chave || "—"}`;
+    } catch {
+        diagnoseBox.hidden = false;
+        diagnoseBox.classList.add("erro");
+        diagTitulo.textContent = "Não foi possível diagnosticar";
+        diagMensagem.textContent = "Erro de conexão com o servidor.";
+        diagSugestao.textContent = "";
+        diagExtra.textContent = "";
+    }
+}
+
+if (diagnoseButton) {
+    diagnoseButton.addEventListener("click", () => {
+        diagnosticar(serialInput.value.trim());
+    });
+}
 
 carregarMaquina();
 verificarJaAtivado();

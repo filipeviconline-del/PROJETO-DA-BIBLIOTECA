@@ -232,3 +232,63 @@
     background: var(--soft-green);
     border-color: var(--primary-green);
 }
+
+/* Botão "diagnosticar" (secundário) */
+.diagnose-button {
+    width: 100%;
+    margin-top: 10px;
+    padding: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--dark-green);
+    background: var(--white);
+    border: 1px dashed var(--primary-green);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+.diagnose-button:hover {
+    background: var(--light-green);
+}
+
+/* Caixa de resultado do diagnóstico */
+.diagnose-box {
+    margin-top: 14px;
+    padding: 14px 16px;
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    text-align: left;
+}
+.diagnose-box.ok {
+    background: #eafaf1;
+    border-color: #bfe3cd;
+}
+.diagnose-box.erro {
+    background: #fdecea;
+    border-color: #f3c2bd;
+}
+.diagnose-box strong {
+    display: block;
+    font-size: 14px;
+    margin-bottom: 6px;
+    color: var(--text-color);
+}
+.diagnose-box p {
+    font-size: 13px;
+    color: var(--text-color);
+    margin-bottom: 6px;
+}
+.diagnose-box .diag-sugestao {
+    font-weight: 600;
+    color: var(--dark-green);
+}
+.diagnose-box.erro .diag-sugestao {
+    color: var(--error-color);
+}
+.diagnose-box small {
+    display: block;
+    margin-top: 8px;
+    font-size: 11px;
+    color: var(--muted-color);
+    font-family: "Courier New", Courier, monospace;
+}

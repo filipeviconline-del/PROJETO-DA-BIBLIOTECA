@@ -386,6 +386,85 @@ def validar_codigo_maquina(codigo: str, id_maquina: str | None = None) -> dict:
     }
 
 
+def diagnosticar(serial: str) -> dict:
+    """Analisa um serial/código e explica, em linguagem clara, por que não ativa.
+
+    Retorna um dict com:
+      * ok (bool): se ativaria com sucesso;
+      * formato: 'serial', 'codigo_maquina' ou 'desconhecido';
+      * problema: identificador curto do problema;
+      * mensagem: explicação amigável;
+      * sugestao: o que fazer para resolver.
+    """
+    bruto = (serial or "").strip().upper().replace("-", "").replace(" ", "")
+    id_maquina = obter_id_maquina()
+    fp = seguranca.impressao_digital_chave()
+    insegura = seguranca.usando_chave_insegura()
+
+    # 1) Campo vazio
+    if not bruto:
+        return {
+            "ok": False, "formato": "desconhecido", "problema": "vazio",
+            "mensagem": "Nenhum código informado.",
+            "sugestao": "Cole o serial ou o código de ativação e tente de novo.",
+            "id_maquina": id_maquina, "impressao_chave": fp,
+        }
+
+    eh_codigo = bruto.startswith("TBM")
+    formato = "codigo_maquina" if eh_codigo else "serial"
+
+    # 2) Comprimento incorreto
+    corpo = bruto[3:] if eh_codigo else bruto
+    esperado = 36 if eh_codigo else 25
+    if len(corpo) != esperado:
+        return {
+            "ok": False, "formato": formato, "problema": "tamanho",
+            "mensagem": (f"O {'código' if eh_codigo else 'serial'} está incompleto "
+                         f"({len(corpo)} de {esperado} caracteres)."),
+            "sugestao": ("Confira se copiou o código inteiro, sem cortar o começo "
+                         "(TBM-) nem o final."),
+            "id_maquina": id_maquina, "impressao_chave": fp,
+        }
+
+    # 3) Decodifica e checa a assinatura (chave)
+    if eh_codigo:
+        info = _decodificar_codigo_maquina(serial)
+    else:
+        info = _decodificar_serial(serial)
+
+    if info is None:
+        # Assinatura não bate: quase sempre é chave diferente.
+        return {
+            "ok": False, "formato": formato, "problema": "chave_ou_corrompido",
+            "mensagem": ("A assinatura não confere. Normalmente isso significa que "
+                         "o código foi gerado com uma CHAVE diferente da que este "
+                         "sistema usa."),
+            "sugestao": ("Gere o código novamente usando a MESMA chave do sistema. "
+                         f"Impressão digital da chave aqui: {fp}"
+                         + (" (ATENÇÃO: este sistema está com a chave PADRÃO insegura)."
+                            if insegura else ".")),
+            "id_maquina": id_maquina, "impressao_chave": fp,
+        }
+
+    # 4) Código de máquina: confere se é para ESTA máquina
+    if eh_codigo:
+        if not hmac.compare_digest(info["hash_maquina"], _hash_maquina(id_maquina)):
+            return {
+                "ok": False, "formato": formato, "problema": "maquina_diferente",
+                "mensagem": "Este código foi gerado para OUTRO computador.",
+                "sugestao": (f"Peça um código para o ID desta máquina: {id_maquina}"),
+                "id_maquina": id_maquina, "impressao_chave": fp,
+            }
+
+    # 5) Tudo certo
+    return {
+        "ok": True, "formato": formato, "problema": None,
+        "mensagem": "Tudo certo! Este código é válido para esta máquina.",
+        "sugestao": "Clique em 'Ativar produto'.",
+        "tipo": info["tipo"], "id_maquina": id_maquina, "impressao_chave": fp,
+    }
+
+
 # ---------------------------------------------------------------------------
 # Persistência da ativação
 # ---------------------------------------------------------------------------
