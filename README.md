@@ -137,6 +137,26 @@ A aplicação está sendo desenvolvida por uma equipe utilizando boas práticas 
 
 O ToschiBook é uma aplicação web local (servidor **Flask** + interface no navegador).
 
+### 🖱️ Atalhos clicáveis (sem terminal)
+
+Para não depender do terminal no dia a dia, crie os **ícones** uma única vez:
+
+- **Linux/macOS:** dê dois cliques em **`criar_atalhos.sh`** (ou rode `python3 criar_atalhos.py`)
+- **Windows:** dê dois cliques em **`criar_atalhos.bat`**
+
+Isso cria, na **Área de Trabalho** e no **menu de aplicativos**, dois ícones:
+
+- **ToschiBook** — abre o sistema (servidor + navegador);
+- **ToschiBook - Seriais** — abre a central de emissão de seriais (uso administrativo).
+
+A partir daí é só **clicar no ícone** — nunca mais precisa do terminal. Para
+criar só o atalho do sistema (ex.: na máquina do cliente), use
+`python3 criar_atalhos.py --sistema`.
+
+> 🐧 No Linux, se o ícone na Área de Trabalho pedir confirmação na primeira vez,
+> clique com o botão direito → "Permitir execução" / "Confiar neste aplicativo".
+> O ícone é gerado em `assets/toschibook.png` pelo `criar_icone.py`.
+
 ### Opção A — Instalador gráfico (assistente) ⭐ recomendado
 
 Um assistente visual no estilo *Avançar → Avançar → Concluir*, com a identidade
